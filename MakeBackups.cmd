@@ -1,19 +1,55 @@
 @echo off
 
-set destination="%USERPROFILE%\Desktop"
+set zipper=%~dp0\7za.exe
+set destination=E:\Backups_NameHere
+set staging=%TEMP%\Backups_NameHere
 
-call BackupFolder.cmd "%USERPROFILE%\OneDrive\Documents" %destination%
-if errorlevel 1 goto :Error
-call BackupFolder.cmd "%USERPROFILE%\Local Files\Passwords.xlxs" %destination%
-if errorlevel 1 goto :Error
+if not exist %destination% (
+    echo Could not find backups folder.  Connect the USB drive and try again.
+    goto :Error
+)
+
+mkdir "%staging%" 2>nul
+if errorlevel 1 (
+    echo Could not create temporary staging folder.
+    goto :Error
+)
+
+for %%S in (
+    "%USERPROFILE%\OneDrive\KeePass"
+    "%USERPROFILE%\OneDrive\Documents"
+) do (
+    call BackupFolder.cmd %%S "%staging%"
+    if errorlevel 1 goto :Error
+)
+
+for %%F in ("%staging%\*") do (
+    echo.
+    echo Moving %%F to USB drive...
+    move /Y "%%F" "%destination%" >nul
+    if errorlevel 1 goto :Error
+
+    echo Testing %%~nxF...
+    %zipper% t "%destination%\%%~nxF" >nul
+    if errorlevel 1 goto :Error
+)
 
 :Success
+rmdir /s /q "%staging%" 2>nul
 echo.
-echo Press any key or wait 10 seconds...
+call :PlaySound "C:\Windows\Media\tada.wav"
+echo All done!  Press any key or wait 10 seconds...
 timeout /t 10 >nul
 exit /b 0
 
 :Error
+rmdir /s /q "%staging%" 2>nul
+call :PlaySound "C:\Windows\Media\tada.wav"
 echo.
+echo Something went wrong.  Check errors above!
 pause
 exit /b 1
+
+:PlaySound
+powershell -c (New-Object Media.SoundPlayer "%~1").PlaySync()
+exit /b
