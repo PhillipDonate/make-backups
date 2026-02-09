@@ -25,13 +25,15 @@ for %%S in (
 
 for %%F in ("%staging%\*") do (
     echo.
-    echo Moving %%F to USB drive...
+    echo Moving %%~nxF to USB drive...
     move /Y "%%F" "%destination%" >nul
     if errorlevel 1 goto :Error
 
     echo Testing %%~nxF...
-    %zipper% t "%destination%\%%~nxF" >nul
+    %zipper% t "%destination%\%%~nxF" 1>nul
     if errorlevel 1 goto :Error
+
+    echo %%~nxF is OK
 )
 
 :Success
