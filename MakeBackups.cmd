@@ -30,7 +30,7 @@ for %%F in ("%staging%\*") do (
     if errorlevel 1 goto :Error
 
     echo Testing %%~nxF...
-    %zipper% t "%destination%\%%~nxF" 1>nul
+    %zipper% t "%destination%\%%~nxF" >nul
     if errorlevel 1 goto :Error
 
     echo %%~nxF is OK
@@ -46,7 +46,6 @@ exit /b 0
 
 :Error
 rmdir /s /q "%staging%" 2>nul
-call :PlaySound "C:\Windows\Media\tada.wav"
 echo.
 echo Something went wrong.  Check errors above!
 pause
