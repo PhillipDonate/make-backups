@@ -25,7 +25,7 @@ for %%S in (
 
 for %%F in ("%staging%\*") do (
     echo.
-    echo Moving %%~nxF to USB drive...
+    echo Moving %%~nxF to %destination%...
     move /Y "%%F" "%destination%" >nul
     if errorlevel 1 goto :Error
 

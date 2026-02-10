@@ -40,6 +40,7 @@ if exist "%archive_path%" (
 )
 
 %zipper% a -mx9 "%archive_path%" "%source_path%"
+if errorlevel 1 goto :Error
 goto :Success
 
 :Usage
