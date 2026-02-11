@@ -32,7 +32,7 @@ set mm=%raw:~4,2%
 set dd=%raw:~7,2%
 set today=%yyyy%-%mm%-%dd%
 
-set archive_path=%target_dir%\%archive_name% %today%.%archive_type%
+set archive_path=%target_dir%\%archive_name%_%today%.%archive_type%
 
 if exist "%archive_path%" (
     echo The file %archive_path% already exists. Delete it if you want to recreate it.
