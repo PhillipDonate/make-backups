@@ -24,9 +24,12 @@ for %%S in (
     if errorlevel 1 goto :Error
 )
 
+echo.
+echo Moving backups to %destination% ...
+echo.
+
 for %%F in ("%staging%\*") do (
-    echo.
-    echo Moving %%~nxF to %destination% ...
+    echo %%~nxF
     move /Y "%%F" "%destination%" >nul
     if errorlevel 1 goto :Error   
 )
