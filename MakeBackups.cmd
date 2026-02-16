@@ -2,49 +2,49 @@
 setlocal
 
 set zipper=%~dp0\7za.exe
-set archive_type=7z
-set destination=E:\Backups_NameHere
-set staging=%TEMP%\Backups_NameHere
+set MB_ARCHIVE_TYPE=7z
+set MB_DESTINATION=E:\Backups_NameHere
+set MB_STAGING=%TEMP%\Backups_NameHere
 
-set sources=^
+set MB_SOURCES=^
     "%ONEDRIVE%\KeePass" ^
     "%ONEDRIVE%\Documents"
 
-if not exist %destination% (
+if not exist %MB_DESTINATION% (
     echo Could not find backups folder.  Do you need to connect the USB drive?
     goto :Error
 )
 
-call :WipeStaging
-mkdir "%staging%" 2>nul
+call :WipeMB_STAGING
+mkdir "%MB_STAGING%" 2>nul
 if errorlevel 1 (
-    echo Could not create temporary staging folder.
+    echo Could not create temporary MB_STAGING folder.
     goto :Error
 )
 
-for %%S in (%sources%) do (
-    call BackupFolder.cmd %%S "%staging%"
+for %%S in (%MB_SOURCES%) do (
+    call MakeBackupArchive.cmd %%S "%MB_STAGING%"
     if errorlevel 1 goto :Error
 )
 
 echo.
-echo Moving backups to %destination% ...
+echo Moving backups to %MB_DESTINATION% ...
 echo.
 
-for %%F in ("%staging%\*") do (
+for %%F in ("%MB_STAGING%\*") do (
     echo %%~nxF
-    move /Y "%%F" "%destination%" >nul
+    move /Y "%%F" "%MB_DESTINATION%" >nul
     if errorlevel 1 goto :Error   
 )
 
 echo.
-echo Testing all backups at %destination% ...
+echo Testing all backups at %MB_DESTINATION% ...
 echo.
 
 set TEST_ARCHIVE_FAIL=0
 
-for %%F in ("%destination%\*.zip" "%destination%\*.7z") do (
-    %zipper% t "%destination%\%%~nxF" >nul 2>&1
+for %%F in ("%MB_DESTINATION%\*.zip" "%MB_DESTINATION%\*.7z") do (
+    %zipper% t "%MB_DESTINATION%\%%~nxF" >nul 2>&1
     if errorlevel 1 (
         set TEST_ARCHIVE_FAIL=1
         echo [FAIL] %%~nxF
@@ -56,7 +56,7 @@ for %%F in ("%destination%\*.zip" "%destination%\*.7z") do (
 if "%TEST_ARCHIVE_FAIL%"=="1" goto :Error
 
 :Success
-call :WipeStaging
+call :WipeMB_STAGING
 call :BeepSuccess
 echo.
 echo All done!  Press any key or wait 10 seconds...
@@ -64,7 +64,7 @@ timeout /t 10 >nul
 exit /b 0
 
 :Error
-call :WipeStaging
+call :WipeMB_STAGING
 call :BeepError
 echo.
 echo Something went wrong.  Check errors above!
@@ -80,6 +80,6 @@ exit /b
 powershell -c "[console]::beep(500,120); [console]::beep(350,150); [console]::beep(250,180)"
 exit /b
 
-:WipeStaging
-rmdir /s /q "%staging%" 2>nul
+:WipeMB_STAGING
+rmdir /s /q "%MB_STAGING%" 2>nul
 exit /b

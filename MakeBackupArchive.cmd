@@ -1,7 +1,7 @@
 @echo off
 setlocal
 
-if not defined archive_type set "archive_type=7z"
+if not defined MB_ARCHIVE_TYPE set "MB_ARCHIVE_TYPE=7z"
 set zipper=%~dp0\7za.exe
 
 set source_path=%~1
@@ -33,7 +33,7 @@ set mm=%raw:~4,2%
 set dd=%raw:~7,2%
 set today=%yyyy%-%mm%-%dd%
 
-set archive_path=%target_path%\%archive_name%_%today%.%archive_type%
+set archive_path=%target_path%\%archive_name%_%today%.%MB_ARCHIVE_TYPE%
 call :NormalizePath "%archive_path%" archive_path
 
 if exist "%archive_path%" (
