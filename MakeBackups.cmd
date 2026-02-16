@@ -5,14 +5,14 @@ set zipper=%~dp0\7za.exe
 call MakeBackupsConfig.cmd
 
 if not exist %MB_DESTINATION% (
-    echo Could not find backups folder.  Do you need to connect the USB drive?
+    echo Could not find destination folder.  Do you need to connect the USB drive?
     goto :Error
 )
 
 call :WipeMB_STAGING
 mkdir "%MB_STAGING%" 2>nul
 if errorlevel 1 (
-    echo Could not create temporary MB_STAGING folder.
+    echo Could not create temporary %MB_STAGING% folder.
     goto :Error
 )
 
