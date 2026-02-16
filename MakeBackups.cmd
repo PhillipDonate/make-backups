@@ -1,6 +1,8 @@
 @echo off
+setlocal
 
 set zipper=%~dp0\7za.exe
+set archive_type=7z
 set destination=E:\Backups_NameHere
 set staging=%TEMP%\Backups_NameHere
 
