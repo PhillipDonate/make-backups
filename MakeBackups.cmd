@@ -2,13 +2,7 @@
 setlocal
 
 set zipper=%~dp0\7za.exe
-set MB_ARCHIVE_TYPE=7z
-set MB_DESTINATION=E:\Backups_NameHere
-set MB_STAGING=%TEMP%\Backups_NameHere
-
-set MB_SOURCES=^
-    "%ONEDRIVE%\KeePass" ^
-    "%ONEDRIVE%\Documents"
+call MakeBackupsConfig.cmd
 
 if not exist %MB_DESTINATION% (
     echo Could not find backups folder.  Do you need to connect the USB drive?
