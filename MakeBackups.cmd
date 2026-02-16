@@ -6,6 +6,10 @@ set archive_type=7z
 set destination=E:\Backups_NameHere
 set staging=%TEMP%\Backups_NameHere
 
+set sources=^
+    "%ONEDRIVE%\KeePass" ^
+    "%ONEDRIVE%\Documents"
+
 if not exist %destination% (
     echo Could not find backups folder.  Do you need to connect the USB drive?
     goto :Error
@@ -18,10 +22,7 @@ if errorlevel 1 (
     goto :Error
 )
 
-for %%S in (
-    "%ONEDRIVE%\KeePass"
-    "%ONEDRIVE%\Documents"
-) do (
+for %%S in (%sources%) do (
     call BackupFolder.cmd %%S "%staging%"
     if errorlevel 1 goto :Error
 )
