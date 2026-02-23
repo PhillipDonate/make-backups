@@ -26,10 +26,9 @@ def op_rmdir(item):
 
 def op_mkdir(item):
     path = Path(item['path'])
-    try:
-        os.mkdir(path)
-    except FileExistsError:
-        pass
+    if path.is_dir():
+        return
+    os.mkdir(path)
 
 def do_global_ops(items):
     for item in items:
@@ -61,7 +60,8 @@ def main():
         for m in active:
             m.next()
 
-    do_global_ops(config.finish)  
+    do_global_ops(config.finish)
+
     failed = [m for m in machines if m.is_failed()]
 
     if failed:
