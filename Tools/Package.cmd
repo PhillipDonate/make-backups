@@ -1,7 +1,7 @@
 @echo off
 setlocal
 
-set Files=MakeBackups.exe 7za.exe Config.py
+set Files=MakeBackups.exe 7za.exe Config.py ok.wav error.wav
 set ArchiveName=MakeBackups.zip
 set zip=7za.exe
 
