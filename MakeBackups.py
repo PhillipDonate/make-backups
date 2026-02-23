@@ -3,6 +3,7 @@ import os
 import shutil
 import importlib.util
 from ArchiveMachine import ArchiveMachine
+import Sound
 import Run
 import Log
 
@@ -64,8 +65,10 @@ def main():
     failed = [m for m in machines if m.is_failed()]
 
     if failed:
+        Sound.error()
         Log.pause_for_failure('One or more problems occurred!')
     else:
+        Sound.success()
         Log.pause_for_success('All done!')
 
 if __name__ == "__main__":
