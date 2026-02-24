@@ -95,14 +95,18 @@ class ArchiveMachine(StateMachine):
         today = date.today().strftime('%Y-%m-%d')
         self.filename = source.name + f'_{today}.{zip}'
         self.filepath = target / self.filename
+
+        if self.filepath.is_file():
+            self.filepath.unlink()
+
         message = f'Pack: {self.filename}'
-        errorlevel = 0
+        code = 0
 
         with Log.status(message):
-            cmd = [ str(_zipper), "a", "-mx9", str(self.filepath), str(source) ]
-            errorlevel = Run.run(cmd)
+            cmd = [ _zipper, "a", "-mx9", self.filepath, source ]
+            code = Run.run(cmd)
 
-        if errorlevel > 0:
+        if code > 0:
             self.fail(message)
         else:
             Log.ok(message)
@@ -144,7 +148,7 @@ class ArchiveMachine(StateMachine):
             code = 0
 
             with Log.status(message):
-                code = Run.run([ str(_zipper), "t", str(self.filepath)])
+                code = Run.run([_zipper, "t", self.filepath])
 
             if code > 0:
                 Log.fail(message)
