@@ -2,6 +2,7 @@ from pathlib import Path
 import os
 import shutil
 import importlib.util
+from time import sleep
 from ArchiveMachine import ArchiveMachine
 import Sound
 import Run
@@ -66,10 +67,13 @@ def main():
 
     if failed:
         Sound.error()
-        Log.pause_for_failure('One or more problems occurred!')
+        with Log.status(f'[{Log.red}]One or more problems occurred![/]', spinner_style=Log.red):
+            input()
+    
     else:
         Sound.success()
-        Log.pause_for_success('All done!')
+        with Log.status(f'[{Log.green}]All done![/]'):
+            sleep(3)
 
 if __name__ == "__main__":
     main()

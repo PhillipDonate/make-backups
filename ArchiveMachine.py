@@ -98,7 +98,7 @@ class ArchiveMachine(StateMachine):
         message = f'Pack: {self.filename}'
         errorlevel = 0
 
-        with Log.console.status(message):
+        with Log.status(message):
             cmd = [ str(_zipper), "a", "-mx9", str(self.filepath), str(source) ]
             errorlevel = Run.run(cmd)
 
@@ -121,7 +121,7 @@ class ArchiveMachine(StateMachine):
         
         message = f'Move: {self.filename} -> {target}'
         
-        with Log.console.status(message):
+        with Log.status(message):
             try:
                 self.filepath = Path(shutil.move(self.filepath, target / self.filename))
             except Exception as e:
@@ -143,7 +143,7 @@ class ArchiveMachine(StateMachine):
             message = f'Test: {f.name}'
             code = 0
 
-            with Log.console.status(message):
+            with Log.status(message):
                 code = Run.run([ str(_zipper), "t", str(self.filepath)])
 
             if code > 0:
