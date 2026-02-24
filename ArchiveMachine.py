@@ -46,7 +46,7 @@ class ArchiveMachine(StateMachine):
             case 'pack':
                 self.op_pack(step)
             case _:
-                raise ValueError(f'First step must be pack')
+                self.fail(f'{self.name}: First step must be pack')
        
         self.index += 1
 
@@ -56,7 +56,7 @@ class ArchiveMachine(StateMachine):
             return
 
         step = self.steps[self.index]
-        op = step["op"]
+        op = step.get('op')
 
         match op:
             case 'pass':
@@ -66,9 +66,9 @@ class ArchiveMachine(StateMachine):
             case 'test':
                 self.op_test(step)
             case 'pack':
-                raise ValueError("Cannot pack again")
+                self.fail(f'{self.name}: Cannot pack again')
             case _:
-                raise ValueError(f"Unknown op: {op}")
+                self.fail(f'{self.name}: Unknown op: {op}')
 
         self.index += 1
 
