@@ -142,7 +142,13 @@ class ArchiveMachine(StateMachine):
             self.fail(f"Not found: {_zipper}")
             return
     
-        pattern = step.get('pattern') or self.filename
+        pattern = None
+
+        if step.get('all_dates'):
+            pattern = f'{self.name}_????-??-??{self.filepath.suffix}'
+        else:
+            pattern = step.get('pattern') or self.filename
+
         filepaths = self.filepath.parent.glob(pattern)
         is_bad = False
 
