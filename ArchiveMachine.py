@@ -1,6 +1,7 @@
 from statemachine import StateMachine, State
 from pathlib import Path
 from datetime import date
+from rich.text import Text
 import shutil
 import Log
 import Run
@@ -99,7 +100,7 @@ class ArchiveMachine(StateMachine):
         if self.filepath.is_file():
             self.filepath.unlink()
 
-        message = f'Pack: {self.filename}'
+        message = Text(f'Pack: {self.filename}')
         code = 0
 
         with Log.status(message):
@@ -109,6 +110,7 @@ class ArchiveMachine(StateMachine):
         if code > 0:
             self.fail(message)
         else:
+            Log.append_size(message, self.filepath)
             Log.ok(message)
 
     def op_move(self, step):
@@ -123,7 +125,8 @@ class ArchiveMachine(StateMachine):
             self.fail(f'Not a directory: {target}')
             return
         
-        message = f'Move: {self.filename} -> {target}'
+        message = Text(f'Move: {self.filename} -> {target}')
+        Log.append_size(message, self.filepath)
         
         with Log.status(message):
             try:
@@ -144,7 +147,8 @@ class ArchiveMachine(StateMachine):
         is_bad = False
 
         for f in filepaths:
-            message = f'Test: {f.name}'
+            message = Text(f'Test: {f.name}')
+            Log.append_size(message, f)
             code = 0
 
             with Log.status(message):
