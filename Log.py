@@ -24,5 +24,5 @@ def append_size(text: Text, path: Path):
             size = f'{size:.2f} {unit}'
             break
         size /= 1024
-    text.append(Text('  ', style="dim grey30"))
-    text.append(Text(size, style="dim italic grey30"))
+    text.append(Text('  ', style="dim grey50"))
+    text.append(Text(size, style="dim italic grey50"))
