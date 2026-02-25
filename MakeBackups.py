@@ -1,19 +1,24 @@
-from pathlib import Path
-import os
-import shutil
-import importlib.util
-from time import sleep
 from ArchiveMachine import ArchiveMachine
-import Sound
-import Run
+from pathlib import Path
+from time import sleep
+import argparse
+import importlib.util
 import Log
+import os
+import Run
+import shutil
+import Sound
 
-def load_config():
-    cfg_file = 'Config.py'
-    cfg_path = Run.get_exe_dir() / cfg_file
+def load_config(arg_config):
+    cfg_path = None
+    
+    if arg_config:
+        cfg_path = Path(arg_config)
+    else:
+        cfg_path = Run.get_exe_dir() / 'Config.py'
 
     if not cfg_path.exists():
-        raise FileNotFoundError(f'Not found: {cfg_file}')
+        raise FileNotFoundError(f'Not found: {cfg_path}')
 
     spec = importlib.util.spec_from_file_location('config', cfg_path)
     config = importlib.util.module_from_spec(spec)
@@ -43,7 +48,10 @@ def do_global_ops(items):
                 raise ValueError(f'Unknown op: {op}')
 
 def main():
-    config = load_config()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--config')
+    args = parser.parse_args()
+    config = load_config(args.config)
 
     do_global_ops(config.prepare)
 
