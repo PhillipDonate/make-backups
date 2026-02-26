@@ -44,10 +44,10 @@ def _get_size_text(path: Path):
     text = Text('  ', style=style)
     return text.append(Text(size, style=style))
 
-def _is_at_least_two_days(d: Duration):
+def _is_at_least_one_day(d: Duration):
     today = date.today()
     future = today + d
-    return (future - today) >= timedelta(days=2)
+    return (future - today) >= timedelta(days=1)
 
 
 class ArchiveMachine(StateMachine):
@@ -229,7 +229,7 @@ class ArchiveMachine(StateMachine):
 
         for f in paths:
             size = _get_size_text(f)
-            status = Text(cull).append(Text(f.name))
+            status = Text(cull).append(Text(f.name)).append(size)
 
             with Log.status(status):
                 try:
@@ -254,7 +254,7 @@ class ArchiveMachine(StateMachine):
         keep = step.get('keep')
         retention = step.get('retention')
 
-        if (keep is None) == (retention is None):
+        if (keep is None) and (retention is None):
             self.fail('Cull: Must specify either retention or keep')
             return
        
@@ -270,7 +270,7 @@ class ArchiveMachine(StateMachine):
             cull_count = max(0, len(filepaths) - keep)
             deletions = filepaths[:cull_count]
 
-        else:
+        if retention is not None:
             duration = None
 
             if type(retention) is str:
@@ -281,8 +281,8 @@ class ArchiveMachine(StateMachine):
                 self.fail('Cull: Invalid retention format')
                 return
             
-            if not _is_at_least_two_days(duration):
-                self.fail('Cull: retention must be at minimum two days')
+            if not _is_at_least_one_day(duration):
+                self.fail('Cull: retention must be at minimum one day')
                 return
 
             deletions = _get_files_older_than(filepaths, duration)
