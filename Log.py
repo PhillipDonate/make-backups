@@ -16,14 +16,3 @@ def status(*args, **kwargs):
     kwargs.setdefault("spinner", "bouncingBall")
     kwargs.setdefault("spinner_style", green)
     return console.status(*args, **kwargs)
-
-def get_size_text(path: Path):
-    size = path.stat().st_size
-    for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
-        if size < 1024:
-            size = f'{size:.2f} {unit}'
-            break
-        size /= 1024
-    style = 'dim italic grey50'
-    text = Text('  ', style=style)
-    return text.append(Text(size, style=style))

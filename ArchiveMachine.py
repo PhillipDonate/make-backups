@@ -1,12 +1,54 @@
+from isodate import Duration, isoerror
 from statemachine import StateMachine, State
 from pathlib import Path
-from datetime import date
+from datetime import date, datetime, timedelta
 from rich.text import Text
+import isodate
 import shutil
 import Log
 import Run
 
 _zipper = Run.get_exe_dir() / '7za.exe'
+
+def _parse_iso_duration(s: str) -> Duration:
+    try:
+        return isodate.parse_duration(s, as_timedelta_if_possible=False)
+    except isoerror.ISO8601Error:
+        return None
+
+def _get_files_older_than(paths, duration: Duration):
+    today = date.today()
+    cutoff = today - duration
+    deletions = []
+
+    for p in paths:
+        try:
+            _, datestr = p.stem.rsplit("_", 1)
+            file_date = datetime.strptime(datestr, "%Y-%m-%d").date()
+        except Exception:
+            continue
+
+        if file_date < cutoff:
+            deletions.append(p)
+
+    return deletions
+
+def _get_size_text(path: Path):
+    size = path.stat().st_size
+    for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
+        if size < 1024:
+            size = f'{size:.2f} {unit}'
+            break
+        size /= 1024
+    style = 'dim italic grey50'
+    text = Text('  ', style=style)
+    return text.append(Text(size, style=style))
+
+def _is_at_least_two_days(d: Duration):
+    today = date.today()
+    future = today + d
+    return (future - today) >= timedelta(days=2)
+
 
 class ArchiveMachine(StateMachine):
     start = State(initial=True)
@@ -112,7 +154,7 @@ class ArchiveMachine(StateMachine):
         if code > 0:
             self.fail(message)
         else:
-            message.append(Log.get_size_text(self.filepath))
+            message.append(_get_size_text(self.filepath))
             Log.ok(message)
 
     def op_move(self, step):
@@ -128,7 +170,7 @@ class ArchiveMachine(StateMachine):
             return
         
         message = Text(f'Move: {self.filename} -> {target}')
-        message.append(Log.get_size_text(self.filepath))
+        message.append(_get_size_text(self.filepath))
         
         with Log.status(message):
             try:
@@ -166,7 +208,7 @@ class ArchiveMachine(StateMachine):
 
         for f in filepaths:
             message = Text(f'Test: {f.name}')
-            message.append(Log.get_size_text(f))
+            message.append(_get_size_text(f))
             code = 0
 
             with Log.status(message):
@@ -186,7 +228,7 @@ class ArchiveMachine(StateMachine):
         ok = True
 
         for f in paths:
-            size = Log.get_size_text(f)
+            size = _get_size_text(f)
             status = Text(cull).append(Text(f.name))
 
             with Log.status(status):
@@ -218,7 +260,7 @@ class ArchiveMachine(StateMachine):
        
         filepaths = self.get_siblings_glob(self.get_all_dates_pattern())
         filepaths = sorted(filepaths)
-        to_cull = None
+        deletions = None
 
         if keep is not None:
             if type(keep) is not int or keep < 1:
@@ -226,9 +268,24 @@ class ArchiveMachine(StateMachine):
                 return
         
             cull_count = max(0, len(filepaths) - keep)
-            to_cull = filepaths[:cull_count]
-        else:
-            to_cull = []
+            deletions = filepaths[:cull_count]
 
-        if not self.delete_files(to_cull):
+        else:
+            duration = None
+
+            if type(retention) is str:
+                retention = 'P' + ''.join(retention.split())
+                duration = _parse_iso_duration(retention)
+
+            if not duration:
+                self.fail('Cull: Invalid retention format')
+                return
+            
+            if not _is_at_least_two_days(duration):
+                self.fail('Cull: retention must be at minimum two days')
+                return
+
+            deletions = _get_files_older_than(filepaths, duration)
+
+        if not self.delete_files(deletions):
             self.fail()
