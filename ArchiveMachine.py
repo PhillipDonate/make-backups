@@ -66,6 +66,8 @@ class ArchiveMachine(StateMachine):
                 self.op_move(step)
             case 'test':
                 self.op_test(step)
+            case 'cull':
+                self.op_cull(step)
             case 'pack':
                 self.fail(f'{self.name}: Cannot pack again')
             case _:
@@ -110,7 +112,7 @@ class ArchiveMachine(StateMachine):
         if code > 0:
             self.fail(message)
         else:
-            Log.append_size(message, self.filepath)
+            message.append(Log.get_size_text(self.filepath))
             Log.ok(message)
 
     def op_move(self, step):
@@ -126,16 +128,26 @@ class ArchiveMachine(StateMachine):
             return
         
         message = Text(f'Move: {self.filename} -> {target}')
-        Log.append_size(message, self.filepath)
+        message.append(Log.get_size_text(self.filepath))
         
         with Log.status(message):
             try:
                 self.filepath = Path(shutil.move(self.filepath, target / self.filename))
+            except OSError as e:
+                message.append(' ').append(e.strerror)
+                self.fail(message)
+                return
             except Exception as e:
-                self.fail(f'{message} {e}')
+                self.fail(message)
                 return
         
         Log.ok(message)
+
+    def get_all_dates_pattern(self):
+        return f'{self.name}_????-??-??{self.filepath.suffix}'
+    
+    def get_siblings_glob(self, pattern):
+        return self.filepath.parent.glob(pattern)
 
     def op_test(self, step):
         if not _zipper.exists():
@@ -145,20 +157,20 @@ class ArchiveMachine(StateMachine):
         pattern = None
 
         if step.get('all_dates'):
-            pattern = f'{self.name}_????-??-??{self.filepath.suffix}'
+            pattern = self.get_all_dates_pattern()
         else:
             pattern = step.get('pattern') or self.filename
 
-        filepaths = self.filepath.parent.glob(pattern)
+        filepaths = self.get_siblings_glob(pattern)
         is_bad = False
 
         for f in filepaths:
             message = Text(f'Test: {f.name}')
-            Log.append_size(message, f)
+            message.append(Log.get_size_text(f))
             code = 0
 
             with Log.status(message):
-                code = Run.run([_zipper, "t", self.filepath])
+                code = Run.run([_zipper, "t", f])
 
             if code > 0:
                 Log.fail(message)
@@ -167,4 +179,56 @@ class ArchiveMachine(StateMachine):
                 Log.ok(message)
         
         if is_bad:
+            self.fail()
+
+    def delete_files(self, paths):
+        cull = 'Cull: '
+        ok = True
+
+        for f in paths:
+            size = Log.get_size_text(f)
+            status = Text(cull).append(Text(f.name))
+
+            with Log.status(status):
+                try:
+                    f.unlink()
+                except OSError as e:
+                    status.append(' ').append(e.strerror)
+                    Log.fail(status)
+                    ok = False
+                    continue
+                except Exception as e:
+                    Log.fail(status)
+                    ok = False
+                    continue
+            
+            size.stylize('strike')
+            status = Text(cull).append(Text(f.name, style='strike gray58')).append(size)
+            Log.ok(status)
+
+        return ok
+
+    def op_cull(self, step):
+        keep = step.get('keep')
+        retention = step.get('retention')
+
+        if (keep is None) == (retention is None):
+            self.fail('Cull: Must specify either retention or keep')
+            return
+       
+        filepaths = self.get_siblings_glob(self.get_all_dates_pattern())
+        filepaths = sorted(filepaths)
+        to_cull = None
+
+        if keep is not None:
+            if type(keep) is not int or keep < 1:
+                self.fail('Cull: keep must be greater than 0')
+                return
+        
+            cull_count = max(0, len(filepaths) - keep)
+            to_cull = filepaths[:cull_count]
+        else:
+            to_cull = []
+
+        if not self.delete_files(to_cull):
             self.fail()

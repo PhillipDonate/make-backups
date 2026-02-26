@@ -17,12 +17,13 @@ def status(*args, **kwargs):
     kwargs.setdefault("spinner_style", green)
     return console.status(*args, **kwargs)
 
-def append_size(text: Text, path: Path):
+def get_size_text(path: Path):
     size = path.stat().st_size
     for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
         if size < 1024:
             size = f'{size:.2f} {unit}'
             break
         size /= 1024
-    text.append(Text('  ', style="dim grey50"))
-    text.append(Text(size, style="dim italic grey50"))
+    style = 'dim italic grey50'
+    text = Text('  ', style=style)
+    return text.append(Text(size, style=style))
