@@ -53,7 +53,7 @@ def main():
     args = parser.parse_args()
     config = load_config(args.config)
 
-    do_global_ops(config.prepare)
+    do_global_ops(getattr(config, 'prepare', []))
 
     machines = [
         ArchiveMachine(name, steps)
@@ -69,7 +69,7 @@ def main():
         for m in active:
             m.next()
 
-    do_global_ops(config.finish)
+    do_global_ops(getattr(config, 'finish', []))
 
     failed = [m for m in machines if m.is_failed()]
 

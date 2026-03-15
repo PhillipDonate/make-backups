@@ -24,6 +24,7 @@ _dest = Path('//NAS/Backups') / _myname
 # create folders for staging archives, or clearing them.
 # If one step encounters an error, the following steps
 # are not executed and the archiving process is aborted.
+# This may be empty or omitted.
 prepare = [
     {'op': 'rmdir', 'path': _staging},
     {'op': 'mkdir', 'path': _staging},
@@ -34,7 +35,7 @@ prepare = [
 # If the prepare steps did not succeed, the backups
 # will not be created and the finish step will be skipped.
 # The finish steps are still executed if one or more archives
-# encounter an error.
+# encounter an error.  This may be empty or omitted.
 finish = [
     {'op': 'rmdir', 'path': _staging, 'ignore_errors': True},
 ]
@@ -82,7 +83,7 @@ archives = {
         # at the current archive's location that do not
         # match the specified cutoff.
         #
-        # 'keep' specified the maximum number of archives
+        # 'keep' specifies the maximum number of archives
         # to leave on disk.
         #
         # 'retain' may be used to indicate a maximum age
