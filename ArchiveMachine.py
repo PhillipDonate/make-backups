@@ -49,7 +49,6 @@ def _is_at_least_one_day(d: Duration):
     future = today + d
     return (future - today) >= timedelta(days=1)
 
-
 class ArchiveMachine(StateMachine):
     start = State(initial=True)
     packing = State()
@@ -138,7 +137,7 @@ class ArchiveMachine(StateMachine):
             return
 
         today = date.today().strftime('%Y-%m-%d')
-        self.filename = source.name + f'_{today}.{zip}'
+        self.filename = self.name + f'_{today}.{zip}'
         self.filepath = target / self.filename
 
         if self.filepath.is_file():
