@@ -10,6 +10,9 @@ import Run
 
 _zipper = Run.get_exe_dir() / '7za.exe'
 
+class ArchiveMachineError(Exception):
+    pass
+
 def _parse_iso_duration(s: str) -> Duration:
     try:
         return isodate.parse_duration(s, as_timedelta_if_possible=False)
@@ -23,8 +26,8 @@ def _get_files_older_than(paths, duration: Duration):
 
     for p in paths:
         try:
-            _, datestr = p.stem.rsplit("_", 1)
-            file_date = datetime.strptime(datestr, "%Y-%m-%d").date()
+            _, datestr = p.stem.rsplit('_', 1)
+            file_date = datetime.strptime(datestr, '%Y-%m-%d').date()
         except Exception:
             continue
 
@@ -73,24 +76,28 @@ class ArchiveMachine(StateMachine):
     def is_failed(self):
         return self.failed
 
-    def fail(self, message=None):
+    def fail(self, e: ArchiveMachineError):
         self.failed = True
+        message = str(e)
         message and Log.fail(message)
         self.complete()
 
     def on_enter_packing(self):
         step = self.steps[self.index]
+        self.index += 1
         op = step.get('op')
 
-        match op:
-            case 'pass':
-                self.complete()
-            case 'pack':
-                self.op_pack(step)
-            case _:
-                self.fail(f'{self.name}: First step must be pack')
-       
-        self.index += 1
+        try:
+            match op:
+                case 'pass':
+                    self.complete()
+                case 'pack':
+                    self.op_pack(step)
+                case _:
+                    raise ArchiveMachineError(f'{self.name}: First step must be pack')
+
+        except ArchiveMachineError as e:
+            self.fail(e)
 
     def on_enter_running(self):
         if self.index >= len(self.steps):
@@ -98,23 +105,26 @@ class ArchiveMachine(StateMachine):
             return
 
         step = self.steps[self.index]
+        self.index += 1
         op = step.get('op')
 
-        match op:
-            case 'pass':
-                self.complete()
-            case 'move':
-                self.op_move(step)
-            case 'test':
-                self.op_test(step)
-            case 'cull':
-                self.op_cull(step)
-            case 'pack':
-                self.fail(f'{self.name}: Cannot pack again')
-            case _:
-                self.fail(f'{self.name}: Unknown op: {op}')
+        try:
+            match op:
+                case 'pass':
+                    self.complete()
+                case 'move':
+                    self.op_move(step)
+                case 'test':
+                    self.op_test(step)
+                case 'cull':
+                    self.op_cull(step)
+                case 'pack':
+                    raise ArchiveMachineError(f'{self.name}: Cannot pack again')
+                case _:
+                    raise ArchiveMachineError(f'{self.name}: Unknown op: {op}')
 
-        self.index += 1
+        except ArchiveMachineError as e:
+            self.fail(e)
 
     def op_pack(self, step):
         zip = step.get('zip') or 'zip'
@@ -122,19 +132,16 @@ class ArchiveMachine(StateMachine):
         out = step['out']
     
         if not _zipper.exists():
-            self.fail(f"Not found: {_zipper}")
-            return
+            raise ArchiveMachineError(f'Not found: {_zipper}')
 
         source = Path(src)
         target = Path(out)
 
         if not source.exists():
-            self.fail(f"Not found: {source}")
-            return
+            raise ArchiveMachineError(f'Not found: {source}')
 
         if not target.exists():
-            self.fail(f"Not found: {target}")
-            return
+            raise ArchiveMachineError(f'Not found: {target}')
 
         today = date.today().strftime('%Y-%m-%d')
         self.filename = self.name + f'_{today}.{zip}'
@@ -147,26 +154,24 @@ class ArchiveMachine(StateMachine):
         code = 0
 
         with Log.status(message):
-            cmd = [ _zipper, "a", "-mx9", self.filepath, source ]
+            cmd = [ _zipper, 'a', '-mx9', self.filepath, source ]
             code = Run.run(cmd)
 
         if code > 0:
-            self.fail(message)
-        else:
-            message.append(_get_size_text(self.filepath))
-            Log.ok(message)
+            raise ArchiveMachineError(message)
+
+        message.append(_get_size_text(self.filepath))
+        Log.ok(message)
 
     def op_move(self, step):
         to = step['to']
         target = Path(to)
 
         if not target.exists():
-            self.fail(f'Not found: {target}')
-            return
+            raise ArchiveMachineError(f'Not found: {target}')
         
         if not target.is_dir():
-            self.fail(f'Not a directory: {target}')
-            return
+            raise ArchiveMachineError(f'Not a directory: {target}')
         
         message = Text(f'Move: {self.filename} -> {target}')
         message.append(_get_size_text(self.filepath))
@@ -174,13 +179,13 @@ class ArchiveMachine(StateMachine):
         with Log.status(message):
             try:
                 self.filepath = Path(shutil.move(self.filepath, target / self.filename))
+
             except OSError as e:
                 message.append(' ').append(e.strerror)
-                self.fail(message)
-                return
-            except Exception as e:
-                self.fail(message)
-                return
+                raise ArchiveMachineError(message)
+
+            except Exception:
+                raise ArchiveMachineError(message)
         
         Log.ok(message)
 
@@ -192,8 +197,7 @@ class ArchiveMachine(StateMachine):
 
     def op_test(self, step):
         if not _zipper.exists():
-            self.fail(f"Not found: {_zipper}")
-            return
+            raise ArchiveMachineError(f'Not found: {_zipper}')
     
         pattern = None
 
@@ -211,7 +215,7 @@ class ArchiveMachine(StateMachine):
             code = 0
 
             with Log.status(message):
-                code = Run.run([_zipper, "t", f])
+                code = Run.run([_zipper, 't', f])
 
             if code > 0:
                 Log.fail(message)
@@ -220,7 +224,7 @@ class ArchiveMachine(StateMachine):
                 Log.ok(message)
         
         if is_bad:
-            self.fail()
+            raise ArchiveMachineError()
 
     def delete_files(self, paths):
         cull = 'Cull: '
@@ -254,8 +258,7 @@ class ArchiveMachine(StateMachine):
         retention = step.get('retention')
 
         if (keep is None) and (retention is None):
-            self.fail('Cull: Must specify either retention or keep')
-            return
+            raise ArchiveMachineError('Cull: Must specify either retention or keep')
        
         filepaths = self.get_siblings_glob(self.get_all_dates_pattern())
         filepaths = sorted(filepaths)
@@ -263,8 +266,7 @@ class ArchiveMachine(StateMachine):
 
         if keep is not None:
             if type(keep) is not int or keep < 1:
-                self.fail('Cull: keep must be greater than 0')
-                return
+                raise ArchiveMachineError('Cull: keep must be greater than 0')
         
             cull_count = max(0, len(filepaths) - keep)
             deletions = filepaths[:cull_count]
@@ -277,14 +279,12 @@ class ArchiveMachine(StateMachine):
                 duration = _parse_iso_duration(retention)
 
             if not duration:
-                self.fail('Cull: Invalid retention format')
-                return
+                raise ArchiveMachineError('Cull: Invalid retention format')
             
             if not _is_at_least_one_day(duration):
-                self.fail('Cull: retention must be at minimum one day')
-                return
+                raise ArchiveMachineError('Cull: retention must be at minimum one day')
 
             deletions = _get_files_older_than(filepaths, duration)
 
         if not self.delete_files(deletions):
-            self.fail()
+            raise ArchiveMachineError()
