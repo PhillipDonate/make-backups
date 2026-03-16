@@ -1,6 +1,4 @@
-from pathlib import Path
 from rich.console import Console
-from rich.text import Text
 
 console = Console()
 red = '#ff0000'

@@ -3,15 +3,19 @@ from statemachine import StateMachine, State
 from pathlib import Path
 from datetime import date, datetime, timedelta
 from rich.text import Text
+import subprocess
 import isodate
 import shutil
+import Paths
 import Log
-import Run
-
-_zipper = Run.get_exe_dir() / '7za.exe'
 
 class ArchiveMachineError(Exception):
     pass
+
+def _run(cmd):
+    suppress = subprocess.DEVNULL
+    result = subprocess.run(args=cmd, stdout=suppress, stderr=suppress)
+    return result.returncode
 
 def _parse_iso_duration(s: str) -> Duration:
     try:
@@ -62,13 +66,12 @@ class ArchiveMachine(StateMachine):
     next = start.to(packing) | packing.to(running) | running.to(running)
     complete = running.to(finished) | packing.to(finished)
 
-    failed = False
-
     def __init__(self, name, steps):
         super().__init__()
         self.name = name
         self.steps = steps
         self.index = 0
+        self.failed = False
 
     def is_finished(self):
         return self.finished.is_active
@@ -131,8 +134,8 @@ class ArchiveMachine(StateMachine):
         src = step['in']
         out = step['out']
     
-        if not _zipper.exists():
-            raise ArchiveMachineError(f'Not found: {_zipper}')
+        if not Paths.zipper.exists():
+            raise ArchiveMachineError(f'Not found: {Paths.zipper}')
 
         source = Path(src)
         target = Path(out)
@@ -154,8 +157,8 @@ class ArchiveMachine(StateMachine):
         code = 0
 
         with Log.status(message):
-            cmd = [ _zipper, 'a', '-mx9', self.filepath, source ]
-            code = Run.run(cmd)
+            cmd = [ Paths.zipper, 'a', '-mx9', self.filepath, source ]
+            code = _run(cmd)
 
         if code > 0:
             raise ArchiveMachineError(message)
@@ -196,8 +199,8 @@ class ArchiveMachine(StateMachine):
         return self.filepath.parent.glob(pattern)
 
     def op_test(self, step):
-        if not _zipper.exists():
-            raise ArchiveMachineError(f'Not found: {_zipper}')
+        if not Paths.zipper.exists():
+            raise ArchiveMachineError(f'Not found: {Paths.zipper}')
     
         pattern = None
 
@@ -215,7 +218,7 @@ class ArchiveMachine(StateMachine):
             code = 0
 
             with Log.status(message):
-                code = Run.run([_zipper, 't', f])
+                code = _run([Paths.zipper, 't', f])
 
             if code > 0:
                 Log.fail(message)

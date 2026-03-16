@@ -5,7 +5,7 @@ import argparse
 import importlib.util
 import Log
 import os
-import Run
+import Paths
 import shutil
 import Sound
 
@@ -15,7 +15,7 @@ def load_config(arg_config):
     if arg_config:
         cfg_path = Path(arg_config)
     else:
-        cfg_path = Run.get_exe_dir() / 'Config.py'
+        cfg_path = Paths.this_dir / 'Config.py'
 
     if not cfg_path.exists():
         raise FileNotFoundError(f'Not found: {cfg_path}')
@@ -52,6 +52,7 @@ def main():
     parser.add_argument('--config')
     args = parser.parse_args()
     config = load_config(args.config)
+    Paths.hydrate(config)
 
     do_global_ops(getattr(config, 'prepare', []))
 

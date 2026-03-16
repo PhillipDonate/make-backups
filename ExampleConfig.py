@@ -4,7 +4,7 @@ from pathlib import Path
 # Example configuration file for MakeBackups.
 # MakeBackups reads 'Config.py' at startup
 # from its current folder by default.
-# Use the optional --config=path_to_file
+# Use the optional --config <path_to_file>
 # argument to override the default behavior.
 
 
@@ -19,6 +19,16 @@ _temp = Path(os.eviron.get('Temp'))
 # Paths may be concatenated.
 _staging =  _temp / _myname
 _dest = Path('//NAS/Backups') / _myname
+
+# Optionally, the locations of 7za.exe and age.exe may be
+# specified.  If these are omitted, MakeBackups will instead
+# look for them in the same directory that it is located.
+# Encrypting archives requires age.exe, and if no encryption
+# steps are performed, it does not need to exist.
+paths = {
+    'zipper': _onedrive / '7za.exe',
+    'age': _onedrive / 'age/age.exe',
+}
 
 # The preparation steps may be optionally used to
 # create folders for staging archives, or clearing them.
