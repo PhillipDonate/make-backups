@@ -176,7 +176,7 @@ class ArchiveMachine(StateMachine):
         if self.filepath.is_file():
             self.filepath.unlink()
 
-        message = Text(f'Pack: {self.filename}')
+        message = Text(f'Pack: {self.filename}{' 🔒' if self.encrypted else ''}')
 
         source_name = source.name
         source_parent = source.parent
