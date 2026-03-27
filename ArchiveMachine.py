@@ -14,6 +14,8 @@ class ArchiveMachineError(Exception):
 
 _archive_extension_to_arguments = {
     'zip': '-cf',
+    'tgz': '-czf',
+    'tar.gz': '-czf',
     'tar.xz': '-cJf',
 }
 
