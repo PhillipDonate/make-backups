@@ -20,12 +20,15 @@ _temp = Path(os.eviron.get('Temp'))
 _staging =  _temp / _myname
 _dest = Path('//NAS/Backups') / _myname
 
-# Optionally, the location of age.exe may be specified.
+# Optionally, the location of tar and/or age may be specified.
 # If these are omitted, MakeBackups will instead look for
-# them in the same directory that it is located.
-# Encrypting archives requires age.exe, and if no encryption
-# steps are performed, it does not need to exist.
+# them in the system's path. Typically you'd just want to omit
+# the entry for tar so that the host system's default location
+# is used.  Encrypting archives requires age.exe. If no encryption
+# is performed during any of the pack steps, it does not need to
+# be specified.
 paths = {
+    'tar': r'C:/Windows/System32/tar.exe',
     'age': _onedrive / 'age/age.exe',
 }
 
@@ -67,6 +70,12 @@ archives = {
             'zip': 'tar.xz', # May be 'zip' (default) or 'tar.xz'.
             'in': _onedrive / 'ExampleFolder1',
             'out': _staging,
+
+            # An age encryption key file is optional.  If specified,
+            # The archive will be encrypted and packed in a single step.
+            # Encrypted archives cannot be tested by this tool and
+            # will trigger an error if a test step is attempted.
+            'encryption_key': _onedrive / 'backups_key.txt',
         },
 
         # The 'move' step may be used to move the

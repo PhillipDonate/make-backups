@@ -17,10 +17,8 @@ _archive_extension_to_arguments = {
     'tar.xz': '-cJf',
 }
 
-def _run(cmd):
-    suppress = subprocess.DEVNULL
-    result = subprocess.run(args=cmd, stdout=suppress, stderr=suppress)
-    return result.returncode
+def _run(cmd, input=None, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL):
+    return subprocess.run(args=cmd, input=input, stdout=stdout, stderr=stderr)
 
 def _parse_iso_duration(s: str) -> Duration:
     try:
@@ -77,6 +75,7 @@ class ArchiveMachine(StateMachine):
         self.steps = steps
         self.index = 0
         self.failed = False
+        self.encrypted = False
 
     def is_finished(self):
         return self.finished.is_active
@@ -87,7 +86,7 @@ class ArchiveMachine(StateMachine):
     def fail(self, e: ArchiveMachineError):
         self.failed = True
         message = str(e)
-        message and Log.fail(message)
+        message and Log.fail(Text(message))
         self.complete()
 
     def on_enter_packing(self):
@@ -156,6 +155,20 @@ class ArchiveMachine(StateMachine):
         if not zip_args:
             raise ArchiveMachineError(f'Unsupported archive format: {zip}')
 
+        encryption_key = step.get('encryption_key')
+
+        if encryption_key:
+            encryption_key = Path(encryption_key)
+
+            if not encryption_key.is_file():
+                raise ArchiveMachineError(f'Not found: {encryption_key}')
+            
+            if not Paths.age.is_file():
+                raise ArchiveMachineError(f'Not found: {Paths.age}')
+
+            zip = f'{zip}.age'
+            self.encrypted = True
+
         today = date.today().strftime('%Y-%m-%d')
         self.filename = self.name + f'_{today}.{zip}'
         self.filepath = target / self.filename
@@ -164,7 +177,6 @@ class ArchiveMachine(StateMachine):
             self.filepath.unlink()
 
         message = Text(f'Pack: {self.filename}')
-        code = 0
 
         source_name = source.name
         source_parent = source.parent
@@ -174,10 +186,15 @@ class ArchiveMachine(StateMachine):
             source_parent = str(source)
 
         with Log.status(message):
-            cmd = [ Paths.zipper, zip_args, self.filepath, '-C', source_parent, source_name ]
-            code = _run(cmd)
+            result = None
 
-        if code > 0:
+            if self.encrypted:
+                result = _run([ Paths.zipper, zip_args, '-', '-C', source_parent, source_name ], stdout=subprocess.PIPE)
+                result = _run([ Paths.age, '-e', '-R', encryption_key, '-o', self.filepath ], input=result.stdout)
+            else:
+                result = _run([ Paths.zipper, zip_args, self.filepath, '-C', source_parent, source_name ])
+
+        if result.returncode > 0:
             raise ArchiveMachineError(message)
 
         message.append(_get_size_text(self.filepath))
@@ -216,6 +233,9 @@ class ArchiveMachine(StateMachine):
         return self.filepath.parent.glob(pattern)
 
     def op_test(self, step):
+        if self.encrypted:
+            raise ArchiveMachineError(f'Cannot test encrypted archive: {self.filename}')
+
         if not Paths.zipper.is_file():
             raise ArchiveMachineError(f'Not found: {Paths.zipper}')
     
@@ -235,7 +255,7 @@ class ArchiveMachine(StateMachine):
             code = 0
 
             with Log.status(message):
-                code = _run([Paths.zipper, '-tf', f])
+                code = _run([Paths.zipper, '-tf', f]).returncode
 
             if code > 0:
                 Log.fail(message)
