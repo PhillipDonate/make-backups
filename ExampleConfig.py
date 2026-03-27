@@ -20,13 +20,12 @@ _temp = Path(os.eviron.get('Temp'))
 _staging =  _temp / _myname
 _dest = Path('//NAS/Backups') / _myname
 
-# Optionally, the locations of 7za.exe and age.exe may be
-# specified.  If these are omitted, MakeBackups will instead
-# look for them in the same directory that it is located.
+# Optionally, the location of age.exe may be specified.
+# If these are omitted, MakeBackups will instead look for
+# them in the same directory that it is located.
 # Encrypting archives requires age.exe, and if no encryption
 # steps are performed, it does not need to exist.
 paths = {
-    'zipper': _onedrive / '7za.exe',
     'age': _onedrive / 'age/age.exe',
 }
 
@@ -65,7 +64,7 @@ archives = {
         
         {
             'op': 'pack',
-            'zip': '7z', # May be 'zip' or '7z'.
+            'zip': 'tar.xz', # May be 'zip' (default) or 'tar.xz'.
             'in': _onedrive / 'ExampleFolder1',
             'out': _staging,
         },

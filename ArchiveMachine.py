@@ -12,6 +12,11 @@ import Log
 class ArchiveMachineError(Exception):
     pass
 
+_archive_extension_to_arguments = {
+    'zip': '-cf',
+    'tar.xz': '-cJf',
+}
+
 def _run(cmd):
     suppress = subprocess.DEVNULL
     result = subprocess.run(args=cmd, stdout=suppress, stderr=suppress)
@@ -134,7 +139,7 @@ class ArchiveMachine(StateMachine):
         src = step['in']
         out = step['out']
     
-        if not Paths.zipper.exists():
+        if not Paths.zipper.is_file():
             raise ArchiveMachineError(f'Not found: {Paths.zipper}')
 
         source = Path(src)
@@ -146,6 +151,11 @@ class ArchiveMachine(StateMachine):
         if not target.exists():
             raise ArchiveMachineError(f'Not found: {target}')
 
+        zip_args = _archive_extension_to_arguments.get(zip)
+
+        if not zip_args:
+            raise ArchiveMachineError(f'Unsupported archive format: {zip}')
+
         today = date.today().strftime('%Y-%m-%d')
         self.filename = self.name + f'_{today}.{zip}'
         self.filepath = target / self.filename
@@ -156,8 +166,15 @@ class ArchiveMachine(StateMachine):
         message = Text(f'Pack: {self.filename}')
         code = 0
 
+        source_name = source.name
+        source_parent = source.parent
+
+        if not source_name:
+            source_name = '.'
+            source_parent = str(source)
+
         with Log.status(message):
-            cmd = [ Paths.zipper, 'a', '-mx9', self.filepath, source ]
+            cmd = [ Paths.zipper, zip_args, self.filepath, '-C', source_parent, source_name ]
             code = _run(cmd)
 
         if code > 0:
@@ -199,7 +216,7 @@ class ArchiveMachine(StateMachine):
         return self.filepath.parent.glob(pattern)
 
     def op_test(self, step):
-        if not Paths.zipper.exists():
+        if not Paths.zipper.is_file():
             raise ArchiveMachineError(f'Not found: {Paths.zipper}')
     
         pattern = None
@@ -218,7 +235,7 @@ class ArchiveMachine(StateMachine):
             code = 0
 
             with Log.status(message):
-                code = _run([Paths.zipper, 't', f])
+                code = _run([Paths.zipper, '-tf', f])
 
             if code > 0:
                 Log.fail(message)
