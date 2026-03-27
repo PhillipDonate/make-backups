@@ -76,6 +76,9 @@ class ArchiveMachine(StateMachine):
         self.index = 0
         self.failed = False
         self.encrypted = False
+        self.filename = None
+        self.filesuffix = None
+        self.filepath = None
 
     def is_finished(self):
         return self.finished.is_active
@@ -170,7 +173,8 @@ class ArchiveMachine(StateMachine):
             self.encrypted = True
 
         today = date.today().strftime('%Y-%m-%d')
-        self.filename = self.name + f'_{today}.{zip}'
+        self.filesuffix = f'.{zip}'
+        self.filename = self.name + f'_{today}{self.filesuffix}'
         self.filepath = target / self.filename
 
         if self.filepath.is_file():
@@ -227,8 +231,8 @@ class ArchiveMachine(StateMachine):
         Log.ok(message)
 
     def get_all_dates_pattern(self):
-        return f'{self.name}_????-??-??{self.filepath.suffix}'
-    
+        return f'{self.name}_????-??-??{self.filesuffix}'
+
     def get_siblings_glob(self, pattern):
         return self.filepath.parent.glob(pattern)
 
