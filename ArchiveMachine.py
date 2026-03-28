@@ -154,8 +154,11 @@ class ArchiveMachine(StateMachine):
 
     def op_pack(self, step):
         zip = step.get('zip') or 'zip'
-        src = step['in']
-        out = step['out']
+        src = step.get('in')
+        out = step.get('out')
+
+        if not (src and out):
+            raise ArchiveMachineError(f'{self.name}: Pack must specify in and out')
     
         if not Paths.zipper.is_file():
             raise ArchiveMachineError(f'Not found: {Paths.zipper}')
