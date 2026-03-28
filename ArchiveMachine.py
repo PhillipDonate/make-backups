@@ -13,7 +13,7 @@ class ArchiveMachineError(Exception):
     pass
 
 _archive_extension_to_arguments = {
-    'zip': '-cf',
+    'zip': '-caf',
     'tgz': '-czf',
     'tar.gz': '-czf',
     'tar.xz': '-cJf',

@@ -8,6 +8,6 @@ set ArchiveName=MakeBackups.zip
 set zip=tar
 
 del /q %ArchiveName% 2>nul
-%zip% -cf %ArchiveName% %Files%
+%zip% -caf %ArchiveName% %Files%
 
 echo Done!
