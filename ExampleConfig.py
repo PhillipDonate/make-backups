@@ -60,7 +60,7 @@ archives = {
 
         {
             'op': 'pack',
-            'zip': 'tar.xz', # 'zip', 'tgz', 'tar.gz', or 'tar.xz'
+            'zip': 'tar.xz', # 'zip', 'tar', 'tgz', 'tar.gz', or 'tar.xz'
             'in': _onedrive / 'ExampleFolder1',
             'out': _staging,
 

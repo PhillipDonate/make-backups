@@ -3,6 +3,7 @@ from statemachine import StateMachine, State
 from pathlib import Path
 from datetime import date, datetime, timedelta
 from rich.text import Text
+from itertools import chain
 import subprocess
 import isodate
 import shutil
@@ -13,14 +14,20 @@ class ArchiveMachineError(Exception):
     pass
 
 _archive_extension_to_arguments = {
-    'zip': '-caf',
+    'zip': ['--format=zip', '-cf'],
+    'tar': '-cf',
     'tgz': '-czf',
     'tar.gz': '-czf',
     'tar.xz': '-cJf',
 }
 
-def _run(cmd, input=None, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL):
-    return subprocess.run(args=cmd, input=input, stdout=stdout, stderr=stderr)
+def _flatten(lst):
+    return list(chain.from_iterable(
+        _flatten(i) if isinstance(i, list) else [i] for i in lst
+    ))
+
+def _run(args, input=None, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL):
+    return subprocess.run(args=_flatten(args), input=input, stdout=stdout, stderr=stderr)
 
 def _parse_iso_duration(s: str) -> Duration:
     try:
