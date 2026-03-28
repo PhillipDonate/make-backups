@@ -1,4 +1,4 @@
 @echo off
 setlocal
 
-py -m nuitka --onefile MakeBackups.py
+py -m nuitka --onefile --windows-console-mode=disable --output-filename=MakeBackups.exe Main.py
