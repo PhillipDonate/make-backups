@@ -158,7 +158,7 @@ class ArchiveMachine(StateMachine):
         out = step.get('out')
 
         if not (src and out):
-            raise ArchiveMachineError(f'{self.name}: Pack must specify in and out')
+            raise ArchiveMachineError(f'{self.name}: Pack must specify "in" and "out"')
     
         if not Paths.zipper.is_file():
             raise ArchiveMachineError(f'Not found: {Paths.zipper}')
@@ -236,7 +236,11 @@ class ArchiveMachine(StateMachine):
         Log.ok(message)
 
     def op_move(self, step):
-        to = step['to']
+        to = step.get('to')
+
+        if not to:
+            raise ArchiveMachineError(f'{self.name}: Move must specify "to"')
+
         target = Path(to)
 
         if not target.exists():
