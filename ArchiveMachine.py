@@ -26,6 +26,11 @@ def _flatten(lst):
         _flatten(i) if isinstance(i, list) else [i] for i in lst
     ))
 
+def _get_output_from_step(step):
+    if step.get('show_output'):
+        return None
+    return subprocess.DEVNULL
+
 def _run(args, input=None, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL):
     return subprocess.run(args=_flatten(args), input=input, stdout=stdout, stderr=stderr)
 
@@ -137,6 +142,8 @@ class ArchiveMachine(StateMachine):
                     self.op_test(step)
                 case 'cull':
                     self.op_cull(step)
+                case 'exec':
+                    self.op_exec(step)
                 case 'pack':
                     raise ArchiveMachineError(f'{self.name}: Cannot pack again')
                 case _:
@@ -189,8 +196,6 @@ class ArchiveMachine(StateMachine):
         if self.filepath.is_file():
             self.filepath.unlink()
 
-        message = Text(f'Pack: {self.filename}{' 🔒' if self.encrypted else ''}')
-
         source_name = source.name
         source_parent = source.parent
 
@@ -198,14 +203,28 @@ class ArchiveMachine(StateMachine):
             source_name = '.'
             source_parent = str(source)
 
-        with Log.status(message):
-            result = None
+        output = _get_output_from_step(step)
+        message = Text(f'Pack: {self.filename}{' 🔒' if self.encrypted else ''}')
 
+        with Log.status(message):
             if self.encrypted:
-                result = _run([ Paths.zipper, zip_args, '-', '-C', source_parent, source_name ], stdout=subprocess.PIPE)
-                result = _run([ Paths.age, '-e', '-R', encryption_key, '-o', self.filepath ], input=result.stdout)
+                result = _run(
+                    [ Paths.zipper, zip_args, '-', '-C', source_parent, source_name ],
+                    stdout=subprocess.PIPE,
+                    stderr=output
+                )
+                result = _run(
+                    [ Paths.age, '-e', '-R', encryption_key, '-o', self.filepath ],
+                    input=result.stdout,
+                    stdout=output,
+                    stderr=output
+                )
             else:
-                result = _run([ Paths.zipper, zip_args, self.filepath, '-C', source_parent, source_name ])
+                result = _run(
+                    [ Paths.zipper, zip_args, self.filepath, '-C', source_parent, source_name ],
+                    stdout=output,
+                    stderr=output
+                )
 
         if result.returncode > 0:
             raise ArchiveMachineError(message)
@@ -236,7 +255,33 @@ class ArchiveMachine(StateMachine):
 
             except Exception:
                 raise ArchiveMachineError(message)
+
+        Log.ok(message)
+
+    def op_exec(self, step):
+        tool_path = step.get('path')
+
+        if not tool_path:
+            raise ArchiveMachineError('Exec: path not specified')
         
+        tool_path = Path(tool_path)
+
+        if not tool_path.is_file():
+            raise ArchiveMachineError(f'Not found: {tool_path}')
+        
+        output = _get_output_from_step(step)
+        message = Text(f'Exec: {self.filename} -> {tool_path.name}')
+    
+        with Log.status(message):
+            result = _run(
+                [ tool_path, self.filepath, self.filename, self.name ],
+                stdout=output,
+                stderr=output
+            )
+
+        if result.returncode > 0:
+            raise ArchiveMachineError(message)
+
         Log.ok(message)
 
     def get_all_dates_pattern(self):

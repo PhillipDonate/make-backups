@@ -12,7 +12,7 @@ _myname = 'Mister_Anderson'
 # Environment variables may be used to create paths.
 _onedrive = Path(os.environ.get('OneDrive'))
 _userdir = Path(os.environ.get('UserProfile'))
-_temp = Path(os.eviron.get('Temp'))
+_temp = Path(os.environ.get('Temp'))
 
 # Paths may be concatenated.
 _staging =  _temp / _myname
@@ -57,7 +57,6 @@ archives = {
 
         # The first archive step must be 'pack'. This creates the archive at the
         # location indicated by 'out'.
-
         {
             'op': 'pack',
             'zip': 'tar.xz', # 'zip', 'tar', 'tgz', 'tar.gz', or 'tar.xz'
@@ -69,34 +68,64 @@ archives = {
             # cannot be tested by this tool and will trigger an error if a test
             # step is attempted.
             'encryption_key': _onedrive / 'backups_key.txt',
+
+            # This is optional and will include available stdout and stderr
+            # streams from the packing process in the terminal.  This is mostly
+            # for debugging a configuration since under normal conditions tar
+            # and age work silently.
+            'show_output': True,
         },
 
         # The 'move' step may be used to move the archive to a new location.  If
         # the archive will be stored on slower storage (USB flash or a network
         # share), it may be better to create the archive on a local disk and
         # then move it to the final destination.
-
         {'op': 'move', 'to': _dest},
 
         # The 'test' step will validate that the archive can be read at its
         # current location. When 'all_dates' is excluded, only the new archive
         # itself will be tested.  When 'all_dates' is true, all past archives of
         # the same name at the current location will also be tested.
-
         {'op': 'test'}, # Test only the new archive
         {'op': 'test', 'all_dates': True}, # Test new and past archives
 
         # 'cull' will remove the oldest sibiling archives at the current
-        # archive's location that do not match the specified cutoff.
+        # archive's location that do not match the specified cutoff.  One or
+        # both of the flags 'keep' or 'retention' must be specified.
         #
         # 'keep' specifies the maximum number of archives to leave on disk.
         #
-        # 'retain' may be used to indicate a maximum age an archive may reach
+        # 'retention' may be used to indicate a maximum age an archive may reach
         # before it is deleted.
-
         {'op': 'cull', 'keep': 50}, # maximum 50 archives
-        {'op': 'cull', 'retain': '2Y 6M 15D'}, # 2 years, 6 months, 15 days
-        {'op': 'cull', 'retain': '3Y'}, # 3 years
+        {'op': 'cull', 'retention': '2Y 6M 15D'}, # 2 years, 6 months, 15 days
+        {'op': 'cull', 'retention': '3Y'}, # 3 years
+
+        # 'exec' will launch an external tool and wait for it to complete. Three
+        # arguments will be passed to the tool's command line.  The first is the
+        # full path to the packed archive.  The second is the filename of the
+        # archive without the parent path.  The third is the name of the archive
+        # as defined by this config file. 
+        {
+            'op': 'exec',
+            'path': _onedrive / 'SFTP_to_remote_host.cmd',
+
+            # This is optional and will include the external tool's stdout and
+            # stderr output streams in the terminal.
+            'show_output': True,
+        },
     ],
 
+
+    # This example shows simple typical usage.
+    'A Simple Example': [
+        {
+            'op': 'pack',
+            'in': r'D:/My Stuff/A Simple Example Folder',
+            'out': _staging,
+        },
+        {'op': 'move', 'to': r'//remote_machine/backups'},
+        {'op': 'cull', 'retention': '1Y'},
+        {'op': 'test', 'all_dates': True},
+    ],
 }
