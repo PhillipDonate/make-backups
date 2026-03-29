@@ -160,8 +160,8 @@ class ArchiveMachine(StateMachine):
         if not (src and out):
             raise ArchiveMachineError(f'{self.name}: Pack must specify "in" and "out"')
     
-        if not Paths.zipper.is_file():
-            raise ArchiveMachineError(f'Not found: {Paths.zipper}')
+        if not Paths.tar.is_file():
+            raise ArchiveMachineError(f'Not found: {Paths.tar}')
 
         source = Path(src)
         target = Path(out)
@@ -212,7 +212,7 @@ class ArchiveMachine(StateMachine):
         with Log.status(message):
             if self.encrypted:
                 result = _run(
-                    [ Paths.zipper, zip_args, '-', '-C', source_parent, source_name ],
+                    [ Paths.tar, zip_args, '-', '-C', source_parent, source_name ],
                     stdout=subprocess.PIPE,
                     stderr=output
                 )
@@ -224,7 +224,7 @@ class ArchiveMachine(StateMachine):
                 )
             else:
                 result = _run(
-                    [ Paths.zipper, zip_args, self.filepath, '-C', source_parent, source_name ],
+                    [ Paths.tar, zip_args, self.filepath, '-C', source_parent, source_name ],
                     stdout=output,
                     stderr=output
                 )
@@ -301,8 +301,8 @@ class ArchiveMachine(StateMachine):
         if self.encrypted:
             raise ArchiveMachineError(f'Cannot test encrypted archive: {self.filename}')
 
-        if not Paths.zipper.is_file():
-            raise ArchiveMachineError(f'Not found: {Paths.zipper}')
+        if not Paths.tar.is_file():
+            raise ArchiveMachineError(f'Not found: {Paths.tar}')
     
         pattern = None
 
@@ -320,7 +320,7 @@ class ArchiveMachine(StateMachine):
             code = 0
 
             with Log.status(message):
-                code = _run([Paths.zipper, '-tf', f]).returncode
+                code = _run([Paths.tar, '-tf', f]).returncode
 
             if code > 0:
                 Log.fail(message)
