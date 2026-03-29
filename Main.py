@@ -1,88 +1,65 @@
+from MainMachine import MainMachine
 from ArchiveMachine import ArchiveMachine
 from pathlib import Path
 from time import sleep
+import sys
 import argparse
 import importlib.util
 import Log
-import os
 import Paths
-import shutil
 import Sound
 
 def load_config(arg_config):
-    cfg_path = None
-    
-    if arg_config:
-        cfg_path = Path(arg_config)
-    else:
-        cfg_path = Paths.this_dir / 'Config.py'
+    cfg_path = Path(arg_config) if arg_config else Paths.this_dir / 'config.py'
 
-    if not cfg_path.exists():
-        raise FileNotFoundError(f'Not found: {cfg_path}')
+    if not cfg_path.is_file():
+        Log.console.print(f'Could not load config: {cfg_path}')
+        return None
 
     spec = importlib.util.spec_from_file_location('config', cfg_path)
     config = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(config)
     return config
 
-def op_rmdir(item):
-    path = Path(item['path'])
-    if os.path.exists(path):
-        shutil.rmtree(path, ignore_errors=item.get('ignore_errors'))
+def report_error():
+    with Log.status(f'[{Log.red}]One or more problems occurred![/]', spinner_style=Log.red):
+        Sound.error()
+        input()
 
-def op_mkdir(item):
-    path = Path(item['path'])
-    if path.is_dir():
-        return
-    os.mkdir(path)
-
-def do_global_ops(items):
-    for item in items:
-        op = item.get('op')
-        match(op):
-            case 'rmdir':
-                op_rmdir(item)
-            case 'mkdir':
-                op_mkdir(item)
-            case _:
-                raise ValueError(f'Unknown op: {op}')
+def report_success():
+    with Log.status(f'[{Log.green}]All done![/]'):
+        Sound.success()
+        sleep(3)
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--config')
     args = parser.parse_args()
     config = load_config(args.config)
+
+    if not config:
+        return 1
+
     Paths.hydrate(config)
 
-    do_global_ops(getattr(config, 'prepare', []))
-
-    machines = [
-        ArchiveMachine(name, steps)
-            for name, steps in config.archives.items()
+    workers = [
+        ArchiveMachine(name, steps) for name, steps in config.archives.items()
     ]
 
-    while True:
-        active = [m for m in machines if not m.is_finished()]
+    main_machine = MainMachine(
+        prep_steps=getattr(config, 'prepare', []),
+        finish_steps=getattr(config, 'finish', []),
+        machines=workers
+    )
 
-        if not active:
-            break
+    main_machine.go()
 
-        for m in active:
-            m.next()
-
-    do_global_ops(getattr(config, 'finish', []))
-
-    failed = [m for m in machines if m.is_failed()]
-
-    if failed:
-        Sound.error()
-        with Log.status(f'[{Log.red}]One or more problems occurred![/]', spinner_style=Log.red):
-            input()
+    if main_machine.is_failed():
+        report_error()
+        return 1
     
-    else:
-        Sound.success()
-        with Log.status(f'[{Log.green}]All done![/]'):
-            sleep(3)
+    report_success()
+    return 0
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

@@ -120,7 +120,7 @@ class ArchiveMachine(StateMachine):
                 case _:
                     raise ArchiveMachineError(f'{self.name}: First step must be pack')
 
-        except ArchiveMachineError as e:
+        except Exception as e:
             self.fail(e)
 
     def on_enter_running(self):
@@ -149,7 +149,7 @@ class ArchiveMachine(StateMachine):
                 case _:
                     raise ArchiveMachineError(f'{self.name}: Unknown op: {op}')
 
-        except ArchiveMachineError as e:
+        except Exception as e:
             self.fail(e)
 
     def op_pack(self, step):

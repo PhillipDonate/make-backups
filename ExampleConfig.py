@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-# Example configuration file for MakeBackups. MakeBackups reads 'Config.py' at
+# Example configuration file for MakeBackups. MakeBackups reads 'config.py' at
 # startup from its current folder by default. Use the optional --config
 # <path_to_file> argument to override the default behavior.
 

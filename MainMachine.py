@@ -1,0 +1,98 @@
+from statemachine import StateMachine, State
+from rich.text import Text
+from pathlib import Path
+import shutil
+import Log
+import os
+
+class MainMachineError(Exception):
+    pass
+
+class MainMachine(StateMachine):
+    start = State(initial=True)
+    prepping = State()
+    archiving = State()
+    finishing = State()
+    completed = State(final=True)
+
+    go = start.to(prepping)
+    next = prepping.to(archiving) | archiving.to(finishing) | finishing.to(completed)
+    fault = prepping.to(completed) | archiving.to(finishing) | finishing.to(completed)
+
+    def __init__(self, prep_steps, finish_steps, machines):
+        super().__init__()
+        self.prep_steps = prep_steps
+        self.finish_steps = finish_steps
+        self.machines = machines
+        self.failed = False
+
+    def is_failed(self):
+        return self.failed
+
+    def fail(self, e: MainMachineError):
+        self.failed = True
+        message = str(e)
+        message and Log.fail(Text(message))
+        self.fault()
+
+    def do_ops(self, steps):
+        try:
+            for step in steps:
+                op = step.get('op')
+
+                match(op):
+                    case 'rmdir':
+                        self.op_rmdir(step)
+                    case 'mkdir':
+                        self.op_mkdir(step)
+                    case _:
+                        raise MainMachineError(f'Unknown op: {op}')                   
+            self.next()
+
+        except e as e:
+            self.fail(e)
+
+    def on_enter_prepping(self):
+        self.do_ops(self.prep_steps)
+
+    def on_enter_finishing(self):
+        self.do_ops(self.finish_steps)
+
+    def on_enter_archiving(self):
+        while True:
+            active_machines = [m for m in self.machines if not m.is_finished()]
+
+            if not active_machines:
+                break
+
+            for m in active_machines:
+                m.next()
+
+        failed_machines = [m for m in self.machines if m.is_failed()]
+
+        if failed_machines:
+            self.fault()
+        else:
+            self.next()
+
+    def on_enter_completed(self):
+        pass
+
+    def op_rmdir(step):
+        path = step.get('path')
+
+        if not path:
+            raise MainMachineError('rmdir: must specifiy "path"')
+
+        path = Path(path)
+
+        if os.path.exists(path):
+            shutil.rmtree(path, ignore_errors=step.get('ignore_errors'))
+
+    def op_mkdir(step):
+        path = step.get('path')
+
+        if not path:
+            raise MainMachineError('mkdir: must specifiy "path"')
+
+        os.mkdir(Path(path))
