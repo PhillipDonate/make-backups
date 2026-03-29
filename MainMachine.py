@@ -49,7 +49,7 @@ class MainMachine(StateMachine):
                         raise MainMachineError(f'Unknown op: {op}')                   
             self.next()
 
-        except e as e:
+        except Exception as e:
             self.fail(e)
 
     def on_enter_prepping(self):
