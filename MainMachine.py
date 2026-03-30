@@ -1,4 +1,5 @@
 from statemachine import StateMachine, State
+from ArchiveMachine import ArchiveMachine
 from rich.text import Text
 from pathlib import Path
 import shutil
@@ -19,7 +20,7 @@ class MainMachine(StateMachine):
     next = prepping.to(archiving) | archiving.to(finishing) | finishing.to(completed)
     fault = prepping.to(completed) | archiving.to(finishing) | finishing.to(completed)
 
-    def __init__(self, prep_steps, finish_steps, machines):
+    def __init__(self, prep_steps, finish_steps, machines: list[ArchiveMachine]):
         super().__init__()
         self.prep_steps = prep_steps
         self.finish_steps = finish_steps
@@ -29,7 +30,7 @@ class MainMachine(StateMachine):
     def is_failed(self):
         return self.failed
 
-    def fail(self, e: MainMachineError):
+    def fail(self, e: Exception):
         self.failed = True
         message = str(e)
         message and Log.fail(Text(message))

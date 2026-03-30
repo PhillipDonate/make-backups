@@ -40,7 +40,7 @@ def _parse_iso_duration(s: str) -> Duration:
     except isoerror.ISO8601Error:
         return None
 
-def _get_files_older_than(paths, duration: Duration):
+def _get_files_older_than(paths: list[Path], duration: Duration):
     today = date.today()
     cutoff = today - duration
     deletions = []
@@ -57,7 +57,7 @@ def _get_files_older_than(paths, duration: Duration):
 
     return deletions
 
-def _get_size_text(path: Path):
+def _get_size_text(path: Path) -> Text:
     size = path.stat().st_size
     for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
         if size < 1024:
@@ -68,7 +68,7 @@ def _get_size_text(path: Path):
     text = Text('  ', style=style)
     return text.append(Text(size, style=style))
 
-def _is_at_least_one_day(d: Duration):
+def _is_at_least_one_day(d: Duration) -> bool:
     today = date.today()
     future = today + d
     return (future - today) >= timedelta(days=1)
@@ -100,7 +100,7 @@ class ArchiveMachine(StateMachine):
     def is_failed(self):
         return self.failed
 
-    def fail(self, e: ArchiveMachineError):
+    def fail(self, e: Exception):
         self.failed = True
         message = str(e)
         message and Log.fail(Text(message))
