@@ -49,12 +49,12 @@ def main():
     main_machine = MainMachine(
         prep_steps=getattr(config, 'prepare', []),
         finish_steps=getattr(config, 'finish', []),
-        machines=workers
+        workers=workers
     )
 
     main_machine.go()
 
-    if main_machine.is_failed():
+    if main_machine.failed:
         report_error()
         return 1
     

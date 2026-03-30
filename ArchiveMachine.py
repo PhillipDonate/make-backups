@@ -77,11 +77,11 @@ class ArchiveMachine(StateMachine):
     start = State(initial=True)
     packing = State()
     running = State()
-    finished = State(final=True)
+    finish = State(final=True)
 
     # Transitions
     next = start.to(packing) | packing.to(running) | running.to(running)
-    complete = running.to(finished) | packing.to(finished)
+    complete = running.to(finish) | packing.to(finish)
 
     def __init__(self, name, steps):
         super().__init__()
@@ -94,11 +94,9 @@ class ArchiveMachine(StateMachine):
         self.filesuffix = None
         self.filepath = None
 
-    def is_finished(self):
-        return self.finished.is_active
-
-    def is_failed(self):
-        return self.failed
+    @property
+    def finished(self) -> bool:
+        return self.finish.is_active
 
     def fail(self, e: Exception):
         self.failed = True

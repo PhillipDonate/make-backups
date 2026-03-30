@@ -20,15 +20,12 @@ class MainMachine(StateMachine):
     next = prepping.to(archiving) | archiving.to(finishing) | finishing.to(completed)
     fault = prepping.to(completed) | archiving.to(finishing) | finishing.to(completed)
 
-    def __init__(self, prep_steps, finish_steps, machines: list[ArchiveMachine]):
+    def __init__(self, prep_steps, finish_steps, workers: list[ArchiveMachine]):
         super().__init__()
         self.prep_steps = prep_steps
         self.finish_steps = finish_steps
-        self.machines = machines
+        self.workers = workers
         self.failed = False
-
-    def is_failed(self):
-        return self.failed
 
     def fail(self, e: Exception):
         self.failed = True
@@ -61,17 +58,17 @@ class MainMachine(StateMachine):
 
     def on_enter_archiving(self):
         while True:
-            active_machines = [m for m in self.machines if not m.is_finished()]
+            active_workers = [m for m in self.workers if not m.finished]
 
-            if not active_machines:
+            if not active_workers:
                 break
 
-            for m in active_machines:
+            for m in active_workers:
                 m.next()
 
-        failed_machines = [m for m in self.machines if m.is_failed()]
+        failed_workers = [m for m in self.workers if m.failed]
 
-        if failed_machines:
+        if failed_workers:
             self.fault()
         else:
             self.next()
