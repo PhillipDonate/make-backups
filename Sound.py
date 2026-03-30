@@ -1,8 +1,8 @@
-import Paths
+import paths
 import winsound
 
-_err_wav = Paths.this_dir / 'error.wav'
-_ok_wav = Paths.this_dir / 'ok.wav'
+_err_wav = paths.this_dir / 'error.wav'
+_ok_wav = paths.this_dir / 'ok.wav'
 
 def _play_sound(path):
     winsound.PlaySound(path, winsound.SND_ASYNC | winsound.SND_FILENAME)

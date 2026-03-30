@@ -3,11 +3,10 @@ setlocal
 
 REM https://www.microsoft.com/en-us/wdsi/filesubmission
 
-set Files=MakeBackups.exe ExampleConfig.py ok.wav error.wav
-set ArchiveName=MakeBackups.zip
-set zip=tar
+set Files=makebackups.exe example_config.py ok.wav error.wav
+set ArchiveName=makebackups.zip
 
 del /q %ArchiveName% 2>nul
-%zip% -caf %ArchiveName% %Files%
+tar -caf %ArchiveName% %Files%
 
 echo Done!

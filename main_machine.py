@@ -1,9 +1,9 @@
 from statemachine import StateMachine, State
-from ArchiveMachine import ArchiveMachine
+from archive_machine import ArchiveMachine
 from rich.text import Text
 from pathlib import Path
 import shutil
-import Log
+import log
 import os
 
 class MainMachineError(Exception):
@@ -30,7 +30,7 @@ class MainMachine(StateMachine):
     def fail(self, e: Exception):
         self.failed = True
         message = str(e)
-        message and Log.fail(Text(message))
+        message and log.fail(Text(message))
         self.fault()
 
     def do_ops(self, steps):

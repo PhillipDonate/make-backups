@@ -7,8 +7,8 @@ from itertools import chain
 import subprocess
 import isodate
 import shutil
-import Paths
-import Log
+import paths
+import log
 
 class ArchiveMachineError(Exception):
     pass
@@ -40,12 +40,12 @@ def _parse_iso_duration(s: str) -> Duration:
     except isoerror.ISO8601Error:
         return None
 
-def _get_files_older_than(paths: list[Path], duration: Duration):
+def _get_files_older_than(path_list: list[Path], duration: Duration):
     today = date.today()
     cutoff = today - duration
     deletions = []
 
-    for p in paths:
+    for p in path_list:
         try:
             _, datestr = p.stem.rsplit('_', 1)
             file_date = datetime.strptime(datestr, '%Y-%m-%d').date()
@@ -101,7 +101,7 @@ class ArchiveMachine(StateMachine):
     def fail(self, e: Exception):
         self.failed = True
         message = str(e)
-        message and Log.fail(Text(message))
+        message and log.fail(Text(message))
         self.complete()
 
     def on_enter_packing(self):
@@ -158,8 +158,8 @@ class ArchiveMachine(StateMachine):
         if not (src and out):
             raise ArchiveMachineError(f'{self.name}: Pack must specify "in" and "out"')
     
-        if not Paths.tar.is_file():
-            raise ArchiveMachineError(f'Not found: {Paths.tar}')
+        if not paths.tar.is_file():
+            raise ArchiveMachineError(f'Not found: {paths.tar}')
 
         source = Path(src)
         target = Path(out)
@@ -183,8 +183,8 @@ class ArchiveMachine(StateMachine):
             if not encryption_key.is_file():
                 raise ArchiveMachineError(f'Not found: {encryption_key}')
             
-            if not Paths.age.is_file():
-                raise ArchiveMachineError(f'Not found: {Paths.age}')
+            if not paths.age.is_file():
+                raise ArchiveMachineError(f'Not found: {paths.age}')
 
             zip = f'{zip}.age'
             self.encrypted = True
@@ -207,22 +207,22 @@ class ArchiveMachine(StateMachine):
         output = _get_output_from_step(step)
         message = Text(f'Pack: {self.filename}{' 🔒' if self.encrypted else ''}')
 
-        with Log.status(message):
+        with log.status(message):
             if self.encrypted:
                 result = _run(
-                    [ Paths.tar, zip_args, '-', '-C', source_parent, source_name ],
+                    [ paths.tar, zip_args, '-', '-C', source_parent, source_name ],
                     stdout=subprocess.PIPE,
                     stderr=output
                 )
                 result = _run(
-                    [ Paths.age, '-e', '-R', encryption_key, '-o', self.filepath ],
+                    [ paths.age, '-e', '-R', encryption_key, '-o', self.filepath ],
                     input=result.stdout,
                     stdout=output,
                     stderr=output
                 )
             else:
                 result = _run(
-                    [ Paths.tar, zip_args, self.filepath, '-C', source_parent, source_name ],
+                    [ paths.tar, zip_args, self.filepath, '-C', source_parent, source_name ],
                     stdout=output,
                     stderr=output
                 )
@@ -231,7 +231,7 @@ class ArchiveMachine(StateMachine):
             raise ArchiveMachineError(message)
 
         message.append(_get_size_text(self.filepath))
-        Log.ok(message)
+        log.ok(message)
 
     def op_move(self, step):
         to = step.get('to')
@@ -250,7 +250,7 @@ class ArchiveMachine(StateMachine):
         message = Text(f'Move: {self.filename} -> {target}')
         message.append(_get_size_text(self.filepath))
         
-        with Log.status(message):
+        with log.status(message):
             try:
                 self.filepath = Path(shutil.move(self.filepath, target / self.filename))
 
@@ -261,7 +261,7 @@ class ArchiveMachine(StateMachine):
             except Exception:
                 raise ArchiveMachineError(message)
 
-        Log.ok(message)
+        log.ok(message)
 
     def op_exec(self, step):
         tool_path = step.get('path')
@@ -277,7 +277,7 @@ class ArchiveMachine(StateMachine):
         output = _get_output_from_step(step)
         message = Text(f'Exec: {self.filename} -> {tool_path.name}')
     
-        with Log.status(message):
+        with log.status(message):
             result = _run(
                 [ tool_path, self.filepath, self.filename, self.name ],
                 stdout=output,
@@ -287,7 +287,7 @@ class ArchiveMachine(StateMachine):
         if result.returncode > 0:
             raise ArchiveMachineError(message)
 
-        Log.ok(message)
+        log.ok(message)
 
     def get_all_dates_pattern(self):
         return f'{self.name}_????-??-??{self.filesuffix}'
@@ -299,8 +299,8 @@ class ArchiveMachine(StateMachine):
         if self.encrypted:
             raise ArchiveMachineError(f'Cannot test encrypted archive: {self.filename}')
 
-        if not Paths.tar.is_file():
-            raise ArchiveMachineError(f'Not found: {Paths.tar}')
+        if not paths.tar.is_file():
+            raise ArchiveMachineError(f'Not found: {paths.tar}')
     
         pattern = None
 
@@ -317,42 +317,42 @@ class ArchiveMachine(StateMachine):
             message.append(_get_size_text(f))
             code = 0
 
-            with Log.status(message):
-                code = _run([Paths.tar, '-tf', f]).returncode
+            with log.status(message):
+                code = _run([paths.tar, '-tf', f]).returncode
 
             if code > 0:
-                Log.fail(message)
+                log.fail(message)
                 is_bad = True
             else:
-                Log.ok(message)
+                log.ok(message)
         
         if is_bad:
             raise ArchiveMachineError()
 
-    def delete_files(self, paths):
+    def delete_files(self, path_list):
         cull = 'Cull: '
         ok = True
 
-        for f in paths:
+        for f in path_list:
             size = _get_size_text(f)
             status = Text(cull).append(Text(f.name)).append(size)
 
-            with Log.status(status):
+            with log.status(status):
                 try:
                     f.unlink()
                 except OSError as e:
                     status.append(' ').append(e.strerror)
-                    Log.fail(status)
+                    log.fail(status)
                     ok = False
                     continue
                 except Exception as e:
-                    Log.fail(status)
+                    log.fail(status)
                     ok = False
                     continue
             
             size.stylize('strike')
             status = Text(cull).append(Text(f.name, style='strike gray58')).append(size)
-            Log.ok(status)
+            log.ok(status)
 
         return ok
 

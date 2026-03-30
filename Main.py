@@ -1,19 +1,19 @@
-from MainMachine import MainMachine
-from ArchiveMachine import ArchiveMachine
+from main_machine import MainMachine
+from archive_machine import ArchiveMachine
 from pathlib import Path
 from time import sleep
 import sys
 import argparse
 import importlib.util
-import Log
-import Paths
-import Sound
+import log
+import paths
+import sound
 
 def load_config(arg_config):
-    cfg_path = Path(arg_config) if arg_config else Paths.this_dir / 'config.py'
+    cfg_path = Path(arg_config) if arg_config else paths.this_dir / 'config.py'
 
     if not cfg_path.is_file():
-        Log.console.print(f'Could not load config: {cfg_path}')
+        log.console.print(f'Could not load config: {cfg_path}')
         return None
 
     spec = importlib.util.spec_from_file_location('config', cfg_path)
@@ -22,13 +22,13 @@ def load_config(arg_config):
     return config
 
 def report_error():
-    with Log.status(f'[{Log.red}]One or more problems occurred![/]', spinner_style=Log.red):
-        Sound.error()
+    with log.status(f'[{log.red}]One or more problems occurred![/]', spinner_style=log.red):
+        sound.error()
         input()
 
 def report_success():
-    with Log.status(f'[{Log.green}]All done![/]'):
-        Sound.success()
+    with log.status(f'[{log.green}]All done![/]'):
+        sound.success()
         sleep(3)
 
 def main():
@@ -40,7 +40,7 @@ def main():
     if not config:
         return 1
 
-    Paths.hydrate(config)
+    paths.hydrate(config)
 
     workers = [
         ArchiveMachine(name, steps) for name, steps in config.archives.items()
