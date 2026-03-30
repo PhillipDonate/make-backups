@@ -1,10 +1,11 @@
 import os
 from pathlib import Path
 
-# Example configuration file for MakeBackups. MakeBackups reads 'config.py' at
-# startup from its current folder by default. Use the optional --config
-# <path_to_file> argument to override the default behavior.
-
+# Example configuration file for MakeBackups showing all available options for
+# reference.  Refer to example_config_simple.py instead for a quick start.
+# 
+# MakeBackups reads 'config.py' at startup from its current folder by default.
+# Use the optional --config <path_to_file> argument to load a specific file.
 
 # Variables may be defined for common paths.
 _myname = 'Mister_Anderson'
@@ -114,18 +115,5 @@ archives = {
             # stderr output streams in the terminal.
             'show_output': True,
         },
-    ],
-
-
-    # This example shows simple typical usage.
-    'A Simple Example': [
-        {
-            'op': 'pack',
-            'in': r'D:/My Stuff/A Simple Example Folder',
-            'out': _staging,
-        },
-        {'op': 'move', 'to': r'//remote_machine/backups'},
-        {'op': 'cull', 'retention': '1Y'},
-        {'op': 'test', 'all_dates': True},
     ],
 }
