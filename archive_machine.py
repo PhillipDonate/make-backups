@@ -4,6 +4,7 @@ from pathlib import Path
 from datetime import date, datetime, timedelta
 from rich.text import Text
 from itertools import chain
+import sys
 import subprocess
 import isodate
 import shutil
@@ -98,10 +99,12 @@ class ArchiveMachine(StateMachine):
     def finished(self) -> bool:
         return self.finish.is_active
 
-    def fail(self, e: Exception):
+    def fail(self, e: Exception = None):
+        if e:
+            message = str(e)
+            log.fail(Text(message))
+
         self.failed = True
-        message = str(e)
-        message and log.fail(Text(message))
         self.complete()
 
     def on_enter_packing(self):
@@ -151,13 +154,13 @@ class ArchiveMachine(StateMachine):
             self.fail(e)
 
     def op_pack(self, step):
-        zip = step.get('zip') or 'zip'
+        zip = step.get('zip') or ('zip' if sys.platform == 'win32' else 'tgz')
         src = step.get('in')
         out = step.get('out')
 
         if not (src and out):
             raise ArchiveMachineError(f'{self.name}: Pack must specify "in" and "out"')
-    
+
         if not paths.tar.is_file():
             raise ArchiveMachineError(f'Not found: {paths.tar}')
 
@@ -205,7 +208,8 @@ class ArchiveMachine(StateMachine):
             source_parent = str(source)
 
         output = _get_output_from_step(step)
-        message = Text(f'Pack: {self.filename}{' 🔒' if self.encrypted else ''}')
+        lock = ' 🔒' if self.encrypted else ''
+        message = Text(f'Pack: {self.filename}{lock}')
 
         with log.status(message):
             if self.encrypted:

@@ -12,7 +12,7 @@ paths = {
 
 archives = {
 
-    # This archive is created in zip format without encryption
+    # This archive is created in default format without encryption
     'hilarious_cat_memes': [
         {
             'op': 'pack',

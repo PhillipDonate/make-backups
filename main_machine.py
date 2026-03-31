@@ -27,10 +27,12 @@ class MainMachine(StateMachine):
         self.workers = workers
         self.failed = False
 
-    def fail(self, e: Exception):
+    def fail(self, e: Exception = None):
+        if e:
+            message = str(e)
+            log.fail(Text(message))
+
         self.failed = True
-        message = str(e)
-        message and log.fail(Text(message))
         self.fault()
 
     def do_ops(self, steps):
@@ -69,7 +71,7 @@ class MainMachine(StateMachine):
         failed_workers = [m for m in self.workers if m.failed]
 
         if failed_workers:
-            self.fault()
+            self.fail()
         else:
             self.next()
 
