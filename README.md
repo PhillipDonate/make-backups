@@ -11,14 +11,13 @@ A lightweight, data-driven incremental backup archiver written in Python.
 - Post-processing support via external tool execution
 - Optional asymmetric encryption via [age](https://age-encryption.org)
 - Simple, flexible Python-based configuration
-- Runs from source or as a self-contained Windows executable
 
 ## Requirements
 
 MakeBackups can be run directly from Python source or as a pre-built Windows executable.
 
 **From source:**
-- Python 3.x
+- Python 3.x (Tested on 3.11 and 3.12)
     - isodate
     - python-statemachine
     - rich
@@ -32,7 +31,7 @@ MakeBackups can be run directly from Python source or as a pre-built Windows exe
 1. Clone the repo
 2. Run `pip install isodate python-statemachine rich`
 3. Create `config.py` — see [Configuration](#configuration)
-4. Run `python <path-to-makebackups>/main.py`
+4. Run `python main.py`
 
 **Windows executable:**
 1. Download and extract the zip from the [Releases](../../releases) page
@@ -43,7 +42,7 @@ A custom config file path can optionally be passed as a command line argument.
 
 ## Configuration
 
-MakeBackups is configured via a `config.py` file placed in the same directory as the executable or script, or by passing `--config <path-to-config>` on the command line.
+MakeBackups is configured via `config.py` in the working directory, or a custom path can be specified with `--config <path>` on the command line.
 
 Two example configuration files are provided:
 - [`example_config_simple.py`](example_config_simple.py) — a minimal setup to get started quickly
