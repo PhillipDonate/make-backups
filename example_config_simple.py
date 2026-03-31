@@ -1,6 +1,6 @@
 
 # Example configuration file for MakeBackups showing the basics for a quick
-# start.  Refer to example_config_full.py for full documenation.
+# start.  Refer to example_config_full.py for full documentation.
 # 
 # MakeBackups reads 'config.py' at startup from its current folder by default.
 # Use the optional --config <path_to_file> argument to load a specific file.
