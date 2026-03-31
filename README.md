@@ -17,9 +17,9 @@ MakeBackups can be run directly from Python source or as a pre-built Windows exe
 
 **From source:**
 - Python 3.x
-- isodate
-- python-statemachine
-- rich
+    - isodate
+    - python-statemachine
+    - rich
 
 **Windows executable:**
 - Download the pre-built package from the [Releases](../../releases) page — A Python install is not required.
