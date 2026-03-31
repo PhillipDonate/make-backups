@@ -2,6 +2,8 @@
 
 A lightweight, data-driven incremental backup archiver written in Python.
 
+![](demo.gif)
+
 ## Features
 
 - Incremental archives automatically named and organized by date
