@@ -90,7 +90,7 @@ archives = {
         {'op': 'test'}, # Test only the new archive
         {'op': 'test', 'all_dates': True}, # Test new and past archives
 
-        # 'cull' will remove the oldest sibiling archives at the current
+        # 'cull' will remove the oldest sibling archives at the current
         # archive's location that do not match the specified cutoff.  One or
         # both of the flags 'keep' or 'retention' must be specified.
         #
