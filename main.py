@@ -2,6 +2,7 @@ from main_machine import MainMachine
 from archive_machine import ArchiveMachine
 from pathlib import Path
 from time import sleep
+from rich.text import Text
 import sys
 import argparse
 import importlib.util
@@ -13,7 +14,7 @@ def load_config(arg_config):
     cfg_path = Path(arg_config) if arg_config else paths.this_dir / 'config.py'
 
     if not cfg_path.is_file():
-        log.console.print(f'Could not load config: {cfg_path}')
+        log.console.print(Text(f'Could not load config: {cfg_path}'))
         return None
 
     spec = importlib.util.spec_from_file_location('config', cfg_path)
