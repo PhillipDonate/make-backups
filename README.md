@@ -1,6 +1,8 @@
 # MakeBackups
 
-A lightweight, data-driven incremental backup archiver written in Python.
+A lightweight, data-driven incremental archiver that automates routine file backups into compressed archives with no complex dependencies. Each backup is a standard archive in a format of your choosing (`.zip`, `.tar.xz`, `.tar.gz`), named by date for easy identification and recovery.
+
+MakeBackups keeps things transparent and self-contained. Backups are plain archives openable with any standard tool, so you can trust your files are recoverable. Built with simplicity in mind, it started as a way to give non-technical family members reliable backups and has since grown to support encryption for long-term storage in untrusted locations.
 
 ![](demo.gif)
 
