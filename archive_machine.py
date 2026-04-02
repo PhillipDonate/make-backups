@@ -16,10 +16,10 @@ class ArchiveMachineError(Exception):
 
 _archive_extension_to_arguments = {
     'zip': ['--format=zip', '-cf'],
-    'tar': '-cf',
-    'tgz': '-czf',
-    'tar.gz': '-czf',
-    'tar.xz': '-cJf',
+    'tar': '-cpf',
+    'tgz': '-czpf',
+    'tar.gz': '-czpf',
+    'tar.xz': '-cJpf',
 }
 
 def _flatten(lst):
