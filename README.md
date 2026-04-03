@@ -19,7 +19,7 @@ MakeBackups keeps things transparent and self-contained. Backups are plain archi
 MakeBackups can be run directly from Python source or as a pre-built Windows executable.
 
 **From source:**
-- Python 3.x (Tested on 3.11 and 3.12)
+- Python 3.x (Tested on 3.11-3.13)
     - isodate
     - python-statemachine
     - rich
