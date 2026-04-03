@@ -4,7 +4,7 @@ import sys
 if sys.platform == 'win32':
     import winsound
     def _play_sound(path):
-        winsound.PlaySound(str(path), winsound.SND_ASYNC | winsound.SND_FILENAME)
+        winsound.PlaySound(str(path), winsound.SND_FILENAME)
 else:
     def _play_sound(path):
         pass

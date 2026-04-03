@@ -23,14 +23,20 @@ def load_config(arg_config):
     return config
 
 def report_error():
-    with log.status(f'[{log.red}]One or more problems occurred![/]', spinner_style=log.red):
+    message = f'[{log.red}]One or more problems occurred![/]'
+
+    with log.status(message, spinner_style=log.red):
         sound.error()
-        input()
+
+    log.fail(message)
 
 def report_success():
-    with log.status(f'[{log.green}]All done![/]'):
+    message = f'[{log.green}]All done![/]'
+
+    with log.status(message):
         sound.success()
-        sleep(3)
+
+    log.ok(message)
 
 def main():
     parser = argparse.ArgumentParser()

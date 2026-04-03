@@ -58,6 +58,14 @@ def _get_files_older_than(path_list: list[Path], duration: Duration):
 
     return deletions
 
+def _safe_symbol(symbol: str) -> str:
+    try:
+        encoding = getattr(sys.stdout, 'encoding', 'ascii') or 'ascii'
+        symbol.encode(encoding)
+        return symbol
+    except:
+        return ''
+
 def _get_size_text(path: Path) -> Text:
     size = path.stat().st_size
     for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
@@ -208,7 +216,7 @@ class ArchiveMachine(StateMachine):
             source_parent = str(source)
 
         output = _get_output_from_step(step)
-        lock = ' 🔒' if self.encrypted else ''
+        lock = _safe_symbol(' 🔒') if self.encrypted else ''
         message = Text(f'Pack: {self.filename}{lock}')
 
         with log.status(message):
