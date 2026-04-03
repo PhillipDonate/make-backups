@@ -78,7 +78,7 @@ class MainMachine(StateMachine):
     def on_enter_completed(self):
         pass
 
-    def op_rmdir(step):
+    def op_rmdir(self, step):
         path = step.get('path')
 
         if not path:
@@ -89,7 +89,7 @@ class MainMachine(StateMachine):
         if os.path.exists(path):
             shutil.rmtree(path, ignore_errors=step.get('ignore_errors'))
 
-    def op_mkdir(step):
+    def op_mkdir(self, step):
         path = step.get('path')
 
         if not path:
