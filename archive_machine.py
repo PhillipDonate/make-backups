@@ -18,6 +18,7 @@ _archive_extension_to_arguments = {
     'zip': ['--format=zip', '-cf'],
     'tar': '-cpf',
     'tgz': '-czpf',
+    'txz': '-cJpf',
     'tar.gz': '-czpf',
     'tar.xz': '-cJpf',
 }
