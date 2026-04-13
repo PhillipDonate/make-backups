@@ -15,19 +15,19 @@ class ArchiveMachineError(Exception):
     pass
 
 if sys.platform == 'win32':
-    _flags_gz = ['--options', 'gzip:compression-level=9']
-    _flags_xz = ['--options', 'xz:compression-level=9']
+    _flags_gz = ['--options', 'gzip:compression-level=9', '-czpf']
+    _flags_xz = ['--options', 'xz:compression-level=9', '-cJpf']
 else:
-    _flags_gz = []
-    _flags_xz = []
+    _flags_gz = ['-I', 'gzip -9', '-cpf']
+    _flags_xz = ['-I', 'xz -9', '-cpf']
 
 _archive_extension_to_arguments = {
     'zip': ['--format=zip', '-cf'],
     'tar': '-cpf',
-    'tgz': [_flags_gz, '-czpf'],
-    'txz': [_flags_xz, '-cJpf'],
-    'tar.gz': [_flags_gz, '-czpf'],
-    'tar.xz': [_flags_xz, '-cJpf'],
+    'tgz': _flags_gz,
+    'txz': _flags_xz,
+    'tar.gz': _flags_gz,
+    'tar.xz': _flags_xz,
 }
 
 def _flatten(lst):
