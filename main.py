@@ -40,7 +40,18 @@ def report_success():
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config')
+    parser.add_argument(
+        '--config',
+        help='Path to configuration (defaults to config.py)'
+    )
+    
+    parser.add_argument(
+        '--archives',
+        nargs="+",
+        default=[],
+        help='Archives to process (defaults to all)'
+    )
+    
     args = parser.parse_args()
     config = load_config(args.config)
 
@@ -48,9 +59,11 @@ def main():
         return 1
 
     paths.hydrate(config)
+    archives = set(args.archives)
 
     workers = [
         ArchiveMachine(name, steps) for name, steps in config.archives.items()
+            if not archives or name in archives
     ]
 
     main_machine = MainMachine(
