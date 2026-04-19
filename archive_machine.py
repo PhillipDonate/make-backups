@@ -66,13 +66,13 @@ def _get_files_older_than(path_list: list[Path], duration: Duration):
 
     return deletions
 
-def _safe_symbol(symbol: str) -> str:
+def _safe_symbol(symbol: str, fallback: str = '') -> str:
     try:
         encoding = getattr(sys.stdout, 'encoding', 'ascii') or 'ascii'
         symbol.encode(encoding)
         return symbol
     except:
-        return ''
+        return fallback
 
 def _get_size_text(path: Path) -> Text:
     size = path.stat().st_size
